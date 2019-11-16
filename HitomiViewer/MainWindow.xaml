@@ -1,0 +1,35 @@
+﻿
+<Window x:Name="mainWindow" x:Class="HitomiViewer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:HitomiViewer"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+    <Grid>
+        <DockPanel>
+            <Menu DockPanel.Dock="Top" x:Name="MainMenu">
+                <Menu.Background>
+                    <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                        <GradientStop x:Name="MainMenuBackground" Offset="0" Color="#F0F0F0" />
+                    </LinearGradientBrush>
+                </Menu.Background>
+                <MenuItem Header="설정" x:Name="SettingMenu" Background="White">
+                    <MenuItem x:Name="DarkMode" Header="_야간모드" IsCheckable="True" IsChecked="False" Checked="MenuItem_Checked" Unchecked="DarkMode_Unchecked"/>
+                    <MenuItem x:Name="MenuSearchMode" Header="_검색모드">
+                        <ComboBox x:Name="SearchMode" HorizontalAlignment="Left">
+                            <ComboBoxItem Content="기본"/>
+                            <ComboBoxItem Content="뒤집기"/>
+                        </ComboBox>
+                    </MenuItem>
+                </MenuItem>
+            </Menu>
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel x:Name="MainPanel" Orientation="Vertical" CanVerticallyScroll="True">
+                </StackPanel>
+            </ScrollViewer>
+        </DockPanel>
+        <Label x:Name="label" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="352,204,0,0"/>
+    </Grid>
+</Window>

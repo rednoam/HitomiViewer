@@ -1,0 +1,17 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:local="clr-namespace:HitomiViewer">
+
+    <Style
+    x:Key="MenuItemStyle"
+    TargetType="{x:Type MenuItem}">
+        <Setter Property="Background" Value="White" />
+        <Setter Property="Foreground" Value="Black" />
+        <Style.Triggers>
+            <Trigger Property="IsHighlighted" Value="True">
+                <Setter Property="Foreground" Value="Black" />
+                <Setter Property="Background" Value="Blue" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+</ResourceDictionary>
