@@ -1,5 +1,7 @@
-﻿using System;
+﻿using ExtensionMethods;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -32,7 +34,7 @@ namespace HitomiViewer
         public Reader(Hitomi hitomi, MainWindow window)
         {
             this.Background = new SolidColorBrush(window.background);
-            this.hitomi = hitomi;
+            this.hitomi = hitomi.Copy();
             this.window = window;
             this.page = 0;
             InitializeComponent();
@@ -44,7 +46,7 @@ namespace HitomiViewer
             this.window.Readers.Add(this);
             this.Closing += (object sender, System.ComponentModel.CancelEventArgs e) => window.Readers.Remove(this);
             this.image.Source = hitomi.thumb;
-            this.hitomi.images = hitomi.files.Select(f => new BitmapImage(new Uri(f))).ToArray();
+            this.hitomi.files = Directory.GetFiles(this.hitomi.dir, "*.jpg").CustomSort().ToArray();
             new TaskFactory().StartNew(() => {
                 System.Threading.Thread.Sleep(100);
                 Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate
@@ -66,13 +68,38 @@ namespace HitomiViewer
             if (e.Key == Key.Right)
             {
                 if (page < hitomi.page - 1)
-                    image.Source = hitomi.images[++page];
+                {
+                    page++;
+                    var img = new BitmapImage(new Uri(hitomi.files[page]));
+                    image.Source = img;
+                }
+                else
+                {
+                    image.Source = new BitmapImage(new Uri(hitomi.files[page]));
+                }
             }
             else if (e.Key == Key.Left)
             {
                 if (page > 0)
-                    image.Source = hitomi.images[--page];
+                {
+                    page--;
+                    var img = new BitmapImage(new Uri(hitomi.files[page]));
+                    image.Source = img;
+                }
+                else
+                {
+                    image.Source = new BitmapImage(new Uri(hitomi.files[page]));
+                }
             }
+            /*else if (e.Key == Key.Space)
+            {
+                image.Source = hitomi.images[page];
+                TestImageBox imageBox = new TestImageBox();
+                imageBox.image1.Source = new BitmapImage(new Uri(hitomi.files[page]));
+                imageBox.Show();
+                Clipboard.SetImage(new BitmapImage(new Uri(hitomi.files[page])));
+                MessageBox.Show(hitomi.files[page]);
+            }*/
             this.Title = hitomi.name;
             if (e.Key == Key.F11)
             {
@@ -105,16 +132,8 @@ namespace HitomiViewer
             }
             else if (e.Key == Key.Enter)
             {
-                string[] innerFiles = System.IO.Directory.GetFiles(hitomi.dir, "*.jpg");
-                hitomi = new Hitomi
-                {
-                    name = hitomi.dir.Split(System.IO.Path.DirectorySeparatorChar).Last(),
-                    dir = hitomi.dir,
-                    page = innerFiles.Length,
-                    files = innerFiles.OrderBy(f => f).ToArray(),
-                    thumb = new BitmapImage(new Uri(innerFiles.OrderBy(f => f).First()))
-                };
-                hitomi.images = hitomi.files.Select(f => new BitmapImage(new Uri(f))).ToArray();
+                this.hitomi = window.GetHitomi(hitomi.dir, "*.jpg");
+                this.hitomi.files = Directory.GetFiles(this.hitomi.dir, "*.jpg").CustomSort().ToArray();
             }
             else if (e.Key == Key.R)
             {
@@ -124,17 +143,15 @@ namespace HitomiViewer
                 this.Background = new SolidColorBrush(window.background);
                 window.MainPanel.Children.Clear();
                 new TaskFactory().StartNew(() => window.LoadHitomi(System.IO.Path.Combine(window.rootDir, window.folder)));
-                string[] innerFiles = System.IO.Directory.GetFiles(hitomi.dir, "*.jpg");
+                string[] innerFiles = System.IO.Directory.GetFiles(hitomi.dir, "*.jpg").CustomSort().ToArray();
                 hitomi = new Hitomi
                 {
                     name = hitomi.dir.Split(System.IO.Path.DirectorySeparatorChar).Last(),
                     dir = hitomi.dir,
                     page = innerFiles.Length,
-                    files = innerFiles.OrderBy(f => f).ToArray(),
-                    thumb = new BitmapImage(new Uri(innerFiles.OrderBy(f => f).First()))
+                    thumb = new BitmapImage(new Uri(innerFiles.First()))
                 };
-                hitomi.images = hitomi.files.Select(f => new BitmapImage(new Uri(f))).ToArray();
-                image.Source = hitomi.images[page];
+                image.Source = new BitmapImage(new Uri(hitomi.files[page]));
             }
         }
 
@@ -142,30 +159,47 @@ namespace HitomiViewer
         {
             if (e.LeftButton == MouseButtonState.Pressed)
             {
-                if (page < hitomi.page-1)
-                    image.Source = hitomi.images[++page];
+                //image.Source = new BitmapImage(new Uri("My%20Application;component/error-803716_960_720.png", UriKind.Relative));
+                if (page < hitomi.page - 1)
+                {
+                    page++;
+                    var img = new BitmapImage(new Uri(hitomi.files[page]));
+                    image.Source = img;
+                }
+                else
+                {
+                    image.Source = new BitmapImage(new Uri(hitomi.files[page]));
+                }
             }
             else if (e.RightButton == MouseButtonState.Pressed)
             {
+                //image.Source = new BitmapImage(new Uri("My%20Application;component/error-803716_960_720.png", UriKind.Relative));
                 if (page > 0)
-                    image.Source = hitomi.images[--page];
+                {
+                    page--;
+                    var img = new BitmapImage(new Uri(hitomi.files[page]));
+                    image.Source = img;
+                }
+                else
+                {
+                    image.Source = new BitmapImage(new Uri(hitomi.files[page]));
+                }
             }
-            this.Title = page + ": " + hitomi.files[page];
+            this.Title = hitomi.name;
         }
 
-        private void Image_MouseWheel(object sender, MouseWheelEventArgs e)
-        {
-            double scale = 1.1;
-            if (e.Delta > 0)
-            {
-                myScaleTransform.ScaleX *= scale;
-                myScaleTransform.ScaleY *= scale;
+        private string ImageSourceToString(ImageSource imageSource) {
+            byte[] bytes = null;
+            var bitmapSource = imageSource as BitmapSource;
+            var encoder = new BmpBitmapEncoder();
+            if (bitmapSource != null) {
+                encoder.Frames.Add(BitmapFrame.Create(bitmapSource));
+                using (var stream = new System.IO.MemoryStream()) {
+                    encoder.Save(stream);
+                    bytes = stream.ToArray();
+                }
             }
-            else if (e.Delta < 0)
-            {
-                myScaleTransform.ScaleX /= scale;
-                myScaleTransform.ScaleY /= scale;
-            }
+            return Convert.ToBase64String(bytes);
         }
     }
     public static class IconHelper

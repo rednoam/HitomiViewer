@@ -6,7 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:HitomiViewer"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="450" Width="800" KeyDown="MainWindow_KeyDown">
     <Grid>
         <DockPanel>
             <Menu DockPanel.Dock="Top" x:Name="MainMenu">
@@ -30,6 +30,6 @@
                 </StackPanel>
             </ScrollViewer>
         </DockPanel>
-        <Label x:Name="label" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="352,204,0,0"/>
+        <Label x:Name="label" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="-600,204,0,0"/>
     </Grid>
 </Window>

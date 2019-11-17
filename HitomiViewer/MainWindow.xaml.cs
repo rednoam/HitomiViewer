@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ExtensionMethods;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -80,12 +81,14 @@ namespace HitomiViewer
             int i = 0;
             foreach (string folder in Folders)
             {
+                i++;
                 if (!(Directory.GetFiles(folder, "*.jpg").Length >= 1)) continue;
                 Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate
                 {
                     label.FontSize = 100;
-                    label.Content = "로딩중" + ++i + "/" + Folders.Length;
-                    label.Margin = new Thickness(352 - label.Content.ToString().Length * 11, 240, 0, 0);
+                    label.Content = /*"로딩중" +*/ i + "/" + Folders.Length;
+                    //label.Width = label.Content.ToString().Length * 120;
+                    //label.Margin = new Thickness(352 - label.Content.ToString().Length * 12, 240, 0, 0);
                     string[] innerFiles = Directory.GetFiles(folder, "*.jpg").CustomSort().ToArray();
                     const int Magnif = 4;
                     Hitomi h = new Hitomi
@@ -93,7 +96,6 @@ namespace HitomiViewer
                         name = folder.Split(Path.DirectorySeparatorChar).Last(),
                         dir = folder,
                         page = innerFiles.Length,
-                        files = innerFiles,
                         thumb = new BitmapImage(new Uri(innerFiles.First()))
                     };
                     StackPanel panel = new StackPanel
@@ -190,6 +192,19 @@ namespace HitomiViewer
             }));
         }
 
+        public Hitomi GetHitomi(string path, string patturn)
+        {
+            string[] innerFiles = Directory.GetFiles(path, patturn).CustomSort().ToArray();
+            Hitomi h = new Hitomi
+            {
+                name = path.Split(Path.DirectorySeparatorChar).Last(),
+                dir = path,
+                page = innerFiles.Length,
+                thumb = new BitmapImage(new Uri(innerFiles.First()))
+            };
+            return h;
+        }
+
         private void MenuItem_Checked(object sender, RoutedEventArgs e)
         {
             background = Colors.Black;
@@ -245,6 +260,48 @@ namespace HitomiViewer
             foreach (Reader reader in Readers)
                 reader.ChangeMode();
             LoadHitomi(Path.Combine(rootDir, folder));
+        }
+
+        private void MainWindow_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.F11)
+            {
+                //Normal
+                if (WindowStyle == WindowStyle.None && WindowState == WindowState.Maximized)
+                {
+                    this.WindowStyle = WindowStyle.SingleBorderWindow;
+                    this.WindowState = WindowState.Normal;
+                }
+                else if (WindowStyle == WindowStyle.SingleBorderWindow && WindowState == WindowState.Normal)
+                {
+                    this.WindowStyle = WindowStyle.None;
+                    this.WindowState = WindowState.Maximized;
+                }
+                //Maximized
+                else if (WindowStyle == WindowStyle.SingleBorderWindow && WindowState == WindowState.Maximized)
+                {
+                    this.WindowStyle = WindowStyle.None;
+                    this.WindowState = WindowState.Normal;
+                    this.WindowState = WindowState.Maximized;
+                }
+            }
+            else if (e.Key == Key.Escape)
+            {
+                if (WindowStyle == WindowStyle.None && WindowState == WindowState.Maximized)
+                {
+                    this.WindowStyle = WindowStyle.SingleBorderWindow;
+                    this.WindowState = WindowState.Normal;
+                }
+            }
+            else if (e.Key == Key.R)
+            {
+                label.FontSize = 100;
+                label.Content = "로딩중";
+                label.Visibility = Visibility.Visible;
+                this.Background = new SolidColorBrush(background);
+                MainPanel.Children.Clear();
+                new TaskFactory().StartNew(() => LoadHitomi(System.IO.Path.Combine(rootDir, folder)));
+            }
         }
 
         private static BitmapFrame FastResize(BitmapFrame bfPhoto, int nWidth, int nHeight)
@@ -418,22 +475,17 @@ namespace HitomiViewer
         public string[] files;
         public BitmapImage thumb;
         public BitmapImage[] images;
-    }
 
-    public static class MyExtensions
-    {
-        public static IEnumerable<string> CustomSort(this IEnumerable<string> list)
+        public static Hitomi Copy(Hitomi hitomi)
         {
-            int maxLen = list.Select(s => s.Length).Max();
-
-            return list.Select(s => new
-            {
-                OrgStr = s,
-                SortStr = System.Text.RegularExpressions.Regex.Replace(s, @"(\d+)|(\D+)", m => m.Value.PadLeft(maxLen, char.IsDigit(m.Value[0]) ? ' ' : '\xffff'))
-            })
-            .OrderBy(x => x.SortStr)
-            .Select(x => x.OrgStr);
+            Hitomi h = new Hitomi();
+            h.name = hitomi.name;
+            h.dir = hitomi.dir;
+            h.page = hitomi.page;
+            h.files = hitomi.files;
+            h.thumb = hitomi.thumb;
+            h.images = hitomi.images;
+            return h;
         }
-
     }
 }
