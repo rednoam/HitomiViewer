@@ -157,6 +157,7 @@ namespace HitomiViewer
                     };
                     bottomPanel.Children.Add(pageLabel);
 
+<<<<<<< Updated upstream
                     InfoPanel.Children.Add(nameLabel);
                     DockPanel.SetDock(nameLabel, Dock.Top);
                     InfoPanel.Children.Add(bottomPanel);
@@ -193,6 +194,9 @@ namespace HitomiViewer
         }
 
         public Hitomi GetHitomi(string path, string patturn)
+=======
+        private void SetColor()
+>>>>>>> Stashed changes
         {
             string[] innerFiles = Directory.GetFiles(path, patturn).CustomSort().ToArray();
             Hitomi h = new Hitomi
