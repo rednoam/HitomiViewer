@@ -48,7 +48,7 @@ namespace ExtensionMethods
                 string name = (((child.panel as DockPanel).Children[1] as DockPanel).Children[0] as Label).Content as string;
                 panelKey.Add(name, child);
             }
-            string[] names = panelKey.Select(k => Path.Combine(Global.MainWindow.path, k.Key)).EESort();
+            string[] names = panelKey.Select(k => Path.Combine(Global.MainWindow.path, k.Key)).IEESort();
             for (int i = 0; i < names.Length; i++)
             {
                 string name = names[i].Split(Path.DirectorySeparatorChar).Last();
@@ -67,7 +67,7 @@ namespace ExtensionMethods
                 string name = h.dir;
                 hitomiKey.Add(name, h);
             }
-            string[] names = hitomiKey.Select(h => h.Key).EESort();
+            string[] names = hitomiKey.Select(h => h.Key).IEESort();
             List<Hitomi> hitomis = new List<Hitomi>();
             for (int i = 0; i < names.Length; i++)
             {
@@ -82,7 +82,7 @@ namespace ExtensionMethods
             return list.Select(f => new FileInfo(f)).ToArray().ExplorerSort().Select(f => f.FullName).ToArray();
         }
 
-        public static string[] EESort(this IEnumerable<string> list)
+        public static string[] IEESort(this IEnumerable<string> list)
         {
             return list.Select(f => new FileInfo(f)).ToArray().ExplorerSort().Select(f => f.FullName).ToArray();
         }

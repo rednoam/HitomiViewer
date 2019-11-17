@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -31,11 +30,11 @@ namespace HitomiViewer
             //IconHelper.RemoveIcon(this);
         }
 
-        public Reader(Hitomi hitomi, MainWindow window)
+        public Reader(Hitomi hitomi)
         {
-            this.Background = new SolidColorBrush(window.background);
+            this.Background = new SolidColorBrush(Global.background);
             this.hitomi = hitomi.Copy();
-            this.window = window;
+            this.window = Global.MainWindow;
             this.page = 0;
             InitializeComponent();
             Init();
@@ -46,7 +45,7 @@ namespace HitomiViewer
             this.window.Readers.Add(this);
             this.Closing += (object sender, System.ComponentModel.CancelEventArgs e) => window.Readers.Remove(this);
             this.image.Source = hitomi.thumb;
-            this.hitomi.files = Directory.GetFiles(this.hitomi.dir, "*.jpg").CustomSort().ToArray();
+            this.hitomi.files = Directory.GetFiles(this.hitomi.dir, "*.jpg").ESort().ToArray();
             new TaskFactory().StartNew(() => {
                 System.Threading.Thread.Sleep(100);
                 Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate
@@ -60,7 +59,7 @@ namespace HitomiViewer
 
         public void ChangeMode()
         {
-            this.Background = new SolidColorBrush(window.background);
+            this.Background = new SolidColorBrush(Global.background);
         }
 
         private void Image_KeyDown(object sender, KeyEventArgs e)
@@ -122,6 +121,14 @@ namespace HitomiViewer
                     this.WindowState = WindowState.Maximized;
                 }
             }
+            else if (e.Key == Key.F9)
+            {
+                this.hitomi = Hitomi.GetHitomi(hitomi.dir, Global.basicPatturn);
+                this.hitomi.files = Directory.GetFiles(this.hitomi.dir, "*.jpg").ESort().ToArray();
+                this.page = 0;
+                this.image.Source = new BitmapImage(new Uri(this.hitomi.files[page]));
+                MessageBox.Show("다시 로드됨.");
+            }
             else if (e.Key == Key.Escape)
             {
                 if (WindowStyle == WindowStyle.None && WindowState == WindowState.Maximized)
@@ -130,20 +137,20 @@ namespace HitomiViewer
                     this.WindowState = WindowState.Normal;
                 }
             }
-            else if (e.Key == Key.Enter)
+            else if (e.Key == Key.F8)
             {
-                this.hitomi = window.GetHitomi(hitomi.dir, "*.jpg");
-                this.hitomi.files = Directory.GetFiles(this.hitomi.dir, "*.jpg").CustomSort().ToArray();
+                this.hitomi = Hitomi.GetHitomi(hitomi.dir, "*.jpg");
+                this.hitomi.files = Directory.GetFiles(this.hitomi.dir, "*.jpg").ESort().ToArray();
             }
             else if (e.Key == Key.R)
             {
                 window.label.FontSize = 100;
                 window.label.Content = "로딩중";
                 window.label.Visibility = Visibility.Visible;
-                this.Background = new SolidColorBrush(window.background);
+                this.Background = new SolidColorBrush(Global.background);
                 window.MainPanel.Children.Clear();
-                new TaskFactory().StartNew(() => window.LoadHitomi(System.IO.Path.Combine(window.rootDir, window.folder)));
-                string[] innerFiles = System.IO.Directory.GetFiles(hitomi.dir, "*.jpg").CustomSort().ToArray();
+                new TaskFactory().StartNew(() => window.LoadHitomi(window.path));
+                string[] innerFiles = System.IO.Directory.GetFiles(hitomi.dir, "*.jpg").ESort().ToArray();
                 hitomi = new Hitomi
                 {
                     name = hitomi.dir.Split(System.IO.Path.DirectorySeparatorChar).Last(),
@@ -153,6 +160,7 @@ namespace HitomiViewer
                 };
                 image.Source = new BitmapImage(new Uri(hitomi.files[page]));
             }
+            //MessageBox.Show(e.Key.ToString());
         }
 
         private void Image_MouseDown(object sender, MouseEventArgs e)
@@ -200,42 +208,6 @@ namespace HitomiViewer
                 }
             }
             return Convert.ToBase64String(bytes);
-        }
-    }
-    public static class IconHelper
-    {
-        [DllImport("user32.dll")]
-        static extern int GetWindowLong(IntPtr hwnd, int index);
-
-        [DllImport("user32.dll")]
-        static extern int SetWindowLong(IntPtr hwnd, int index, int newStyle);
-
-        [DllImport("user32.dll")]
-        static extern bool SetWindowPos(IntPtr hwnd, IntPtr hwndInsertAfter, int x,
-    int y, int width, int height, uint flags);
-
-        [DllImport("user32.dll")]
-        static extern IntPtr SendMessage(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr
-    lParam);
-
-        const int GWL_EXSTYLE = -20;
-        const int WS_EX_DLGMODALFRAME = 0x0001;
-        const int SWP_NOSIZE = 0x0001;
-        const int SWP_NOMOVE = 0x0002;
-        const int SWP_NOZORDER = 0x0004;
-        const int SWP_FRAMECHANGED = 0x0020;
-        const uint WM_SETICON = 0x0080;
-
-        public static void RemoveIcon(Window window)
-        {
-            // Get this window's handle
-            IntPtr hwnd = new System.Windows.Interop.WindowInteropHelper(window).Handle;
-            // Change the extended window style to not show a window icon
-            int extendedStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
-            SetWindowLong(hwnd, GWL_EXSTYLE, extendedStyle | WS_EX_DLGMODALFRAME);
-            // Update the window's non-client area to reflect the changes
-            SetWindowPos(hwnd, IntPtr.Zero, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE |
-    SWP_NOZORDER | SWP_FRAMECHANGED);
         }
     }
 }

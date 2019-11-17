@@ -63,9 +63,39 @@ namespace HitomiViewer.Properties {
         /// <summary>
         ///   System.Drawing.Bitmap 형식의 지역화된 리소스를 찾습니다.
         /// </summary>
-        internal static System.Drawing.Bitmap error_803716_960_720 {
+        internal static System.Drawing.Bitmap download_arrow {
             get {
-                object obj = ResourceManager.GetObject("error_803716_960_720", resourceCulture);
+                object obj = ResourceManager.GetObject("download_arrow", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   System.Drawing.Bitmap 형식의 지역화된 리소스를 찾습니다.
+        /// </summary>
+        internal static System.Drawing.Bitmap download_button {
+            get {
+                object obj = ResourceManager.GetObject("download_button", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   System.Drawing.Bitmap 형식의 지역화된 리소스를 찾습니다.
+        /// </summary>
+        internal static System.Drawing.Bitmap hitomi {
+            get {
+                object obj = ResourceManager.GetObject("hitomi", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   System.Drawing.Bitmap 형식의 지역화된 리소스를 찾습니다.
+        /// </summary>
+        internal static System.Drawing.Bitmap imageicon {
+            get {
+                object obj = ResourceManager.GetObject("imageicon", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
