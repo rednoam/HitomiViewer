@@ -69,12 +69,6 @@ namespace HitomiViewer
                 if (page < hitomi.page - 1)
                 {
                     page++;
-                    var img = new BitmapImage(new Uri(hitomi.files[page]));
-                    image.Source = img;
-                }
-                else
-                {
-                    image.Source = new BitmapImage(new Uri(hitomi.files[page]));
                 }
             }
             else if (e.Key == Key.Left)
@@ -82,13 +76,12 @@ namespace HitomiViewer
                 if (page > 0)
                 {
                     page--;
-                    var img = new BitmapImage(new Uri(hitomi.files[page]));
-                    image.Source = img;
                 }
-                else
-                {
-                    image.Source = new BitmapImage(new Uri(hitomi.files[page]));
-                }
+            }
+            if (e.Key == Key.Right || e.Key == Key.Left)
+            {
+                PreLoad();
+                SetImage(new Uri(hitomi.files[page]));
             }
             /*else if (e.Key == Key.Space)
             {
@@ -139,8 +132,13 @@ namespace HitomiViewer
             }
             else if (e.Key == Key.F8)
             {
-                this.hitomi = Hitomi.GetHitomi(hitomi.dir, "*.jpg");
-                this.hitomi.files = Directory.GetFiles(this.hitomi.dir, "*.jpg").ESort().ToArray();
+                SetImage(new Uri(hitomi.files[page]));
+                MessageBox.Show("(페이지만)다시 로드됨.");
+            }
+            else if (e.Key == Key.F7)
+            {
+                this.page = int.Parse(new InputBox("페이지: ").ShowDialog());
+                MessageBox.Show("(페이지)"+this.page);
             }
             else if (e.Key == Key.R)
             {
@@ -158,9 +156,42 @@ namespace HitomiViewer
                     page = innerFiles.Length,
                     thumb = new BitmapImage(new Uri(innerFiles.First()))
                 };
-                image.Source = new BitmapImage(new Uri(hitomi.files[page]));
+                SetImage(new Uri(hitomi.files[page]));
             }
             //MessageBox.Show(e.Key.ToString());
+        }
+
+        private void SetImage(Uri link)
+        {
+            var src = new BitmapImage();
+            src.BeginInit();
+            src.CacheOption = BitmapCacheOption.None;
+            src.CreateOptions = BitmapCreateOptions.PreservePixelFormat;
+            src.DownloadFailed += delegate {
+                Console.WriteLine("Failed");
+            };
+
+            src.DownloadProgress += delegate {
+                Console.WriteLine("Progress");
+            };
+
+            src.DownloadCompleted += delegate {
+                Console.WriteLine("Completed");
+            };
+            src.UriSource = link;
+            src.EndInit();
+            image.Source = src;
+        }
+
+        private void PreLoad()
+        {
+            return;
+            Console.WriteLine(page + "/" + ((page-1) % 10 == 0).ToString()+"/"+((page - 1) % 10).ToString());
+            for (int i = page; (page-1) % 10 == 0 && i < page+10 && i < hitomi.page; i++)
+            {
+                Console.WriteLine(i.ToString());
+                new BitmapImage(new Uri(this.hitomi.files[i]));
+            }
         }
 
         private void Image_MouseDown(object sender, MouseEventArgs e)
@@ -192,6 +223,11 @@ namespace HitomiViewer
                 {
                     image.Source = new BitmapImage(new Uri(hitomi.files[page]));
                 }
+            }
+            if (e.RightButton == MouseButtonState.Pressed || e.LeftButton == MouseButtonState.Pressed)
+            {
+                PreLoad();
+                SetImage(new Uri(hitomi.files[page]));
             }
             this.Title = hitomi.name;
         }
