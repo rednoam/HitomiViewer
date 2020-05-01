@@ -6,7 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:HitomiViewer"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="450" Width="800" KeyDown="MainWindow_KeyDown">
     <Grid>
         <DockPanel>
             <Menu DockPanel.Dock="Top" x:Name="MainMenu">
@@ -17,8 +17,30 @@
                 </Menu.Background>
                 <MenuItem Header="설정" x:Name="SettingMenu" Background="White">
                     <MenuItem x:Name="DarkMode" Header="_야간모드" IsCheckable="True" IsChecked="False" Checked="MenuItem_Checked" Unchecked="DarkMode_Unchecked"/>
-                    <MenuItem x:Name="MenuSearchMode" Header="_검색모드">
-                        <ComboBox x:Name="SearchMode" HorizontalAlignment="Left">
+                    <MenuItem x:Name="MenuPage" Header="페이지">
+                        <MenuItem Header="쪽수"/>
+                        <ComboBox x:Name="Page_Index"/>
+                        <MenuItem Header="페이지당 아이템 개수"/>
+                        <ComboBox x:Name="Page_ItemCount">
+                            <ComboBoxItem Content="10"/>
+                            <ComboBoxItem Content="15"/>
+                            <ComboBoxItem Content="20"/>
+                            <ComboBoxItem Content="25"/>
+                            <ComboBoxItem Content="30"/>
+                            <ComboBoxItem Content="35"/>
+                            <ComboBoxItem Content="40"/>
+                            <ComboBoxItem Content="45"/>
+                            <ComboBoxItem Content="50"/>
+                        </ComboBox>
+                    </MenuItem>
+                    <MenuItem x:Name="MenuSearchMode" Header="_정렬모드">
+                        <ComboBox x:Name="SearchMode1" HorizontalAlignment="Left">
+                            <ComboBoxItem Content="이름순"/>
+                            <ComboBoxItem Content="생성날짜순"/>
+                            <ComboBoxItem Content="편집날짜순"/>
+                            <ComboBoxItem Content="크기순"/>
+                        </ComboBox>
+                        <ComboBox x:Name="SearchMode2" HorizontalAlignment="Left">
                             <ComboBoxItem Content="기본"/>
                             <ComboBoxItem Content="뒤집기"/>
                         </ComboBox>
@@ -30,6 +52,6 @@
                 </StackPanel>
             </ScrollViewer>
         </DockPanel>
-        <Label x:Name="label" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="352,204,0,0"/>
+        <Label x:Name="label" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="-600,204,0,0"/>
     </Grid>
 </Window>
