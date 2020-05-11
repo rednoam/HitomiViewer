@@ -34,6 +34,8 @@
                 <Image x:Name="sizeImage" Width="25" Height="25" VerticalAlignment="Bottom" Source="pack://siteoforigin:,,,/Resources/download-button.png"/>
                 <Label x:Name="pageLabel" VerticalAlignment="Bottom" Foreground="Black" Content="PAGELABEL"/>
                 <Image x:Name="pageImage" Width="25" Height="25" VerticalAlignment="Bottom" Source="pack://siteoforigin:,,,/Resources/imageicon.png"/>
+                <Label x:Name="sizeperpageLabel" VerticalAlignment="Bottom" Foreground="Black" Content="SIZEPERPAGELABEL"/>
+                <Image x:Name="sizeperpageImage" Width="25" Height="25" VerticalAlignment="Bottom" Source="pack://siteoforigin:,,,/Resources/imageicon.png"/>
             </StackPanel>
         </DockPanel>
     </DockPanel>

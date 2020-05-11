@@ -133,6 +133,8 @@ namespace ExtensionMethods
             return Hitomi.Copy(hitomi);
         }
 
+        public static string RemoveSpace(this string s) => s.Replace(" ", string.Empty);
+
         static internal ImageSource doGetImageSourceFromResource(string psAssemblyName, string psResourceName)
         {
             Uri oUri = new Uri("pack://application:,,,/" + psAssemblyName + ";component/" + psResourceName, UriKind.RelativeOrAbsolute);

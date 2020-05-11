@@ -166,6 +166,59 @@ namespace HitomiViewer
             GC.Collect();
         }
 
+        public void LoadHitomi(string[] files)
+        {
+            Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate { label.Visibility = Visibility.Visible; }));
+            if (files.Length <= 0)
+            {
+                Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate { label.Visibility = Visibility.Hidden; }));
+                return;
+            }
+            string[] Folders = FolderSort(files);
+            Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate
+            {
+                this.Background = new SolidColorBrush(Global.background);
+                MainPanel.Children.Clear();
+                if (SearchMode2.SelectedIndex == 1)
+                    Folders = Folders.Reverse().ToArray();
+            }));
+            int i = 0;
+            int SelectedPage = 1;
+            Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
+            {
+                SelectedPage = Page_Index.SelectedIndex + 1;
+                this.Title = string.Format("MainWindow - {0}페이지", SelectedPage);
+            }));
+            foreach (string folder in Folders.Where(x => Array.IndexOf(Folders, x) + 1 <= Page_itemCount * SelectedPage && Array.IndexOf(Folders, x) + 1 > (SelectedPage - 1) * Page_itemCount))
+            {
+                i++;
+                Console.WriteLine("{0}: {1}", i, folder);
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+                string[] @NotSorted = Directory.GetFiles(folder).Where(file => allowedExtensions.Any(file.ToLower().EndsWith)).ToArray().ESort().ToArray();
+                if (NotSorted.Length <= 0) continue;
+                Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate
+                {
+                    label.FontSize = 100;
+                    label.Content = i + "/" + Page_itemCount;
+                    string[] innerFiles = NotSorted.ESort().ToArray();
+                    Hitomi h = new Hitomi
+                    {
+                        name = folder.Split(Path.DirectorySeparatorChar).Last(),
+                        dir = folder,
+                        page = innerFiles.Length,
+                        thumb = new BitmapImage(new Uri(innerFiles.First()))
+                    };
+                    MainPanel.Children.Add(new HitomiPanel(h));
+                    Console.WriteLine("Completed: {0}", innerFiles.First());
+                }));
+            }
+            Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate
+            {
+                label.Visibility = Visibility.Hidden;
+            }));
+            GC.Collect();
+        }
+
         private void SetColor()
         {
             foreach(HitomiPanel hitomiPanel in MainPanel.Children)
@@ -338,6 +391,23 @@ namespace HitomiViewer
         {
             Page_itemCount = uint.Parse(((ComboBoxItem)Page_ItemCount.SelectedItem).Content.ToString());
             new TaskFactory().StartNew(() => LoadHitomi(path));
+        }
+
+        private void Search_Button_Click(object sender, RoutedEventArgs e)
+        {
+            string SearchText = Search_Text.Text;
+            string[] files = Directory.GetDirectories(path).Where(x => x.RemoveSpace().Contains(SearchText.RemoveSpace())).ToArray();
+            new TaskFactory().StartNew(() => LoadHitomi(files));
+        }
+
+        private void Search_Text_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                string SearchText = Search_Text.Text;
+                string[] files = Directory.GetDirectories(path).Where(x => x.RemoveSpace().Contains(SearchText.RemoveSpace())).ToArray();
+                new TaskFactory().StartNew(() => LoadHitomi(files));
+            }
         }
     }
 }
