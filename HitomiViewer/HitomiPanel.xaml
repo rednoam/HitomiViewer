@@ -7,24 +7,17 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <DockPanel x:Name="panel" HorizontalAlignment="Stretch" Height="100" Margin="5" Background="White">
+        <DockPanel.ContextMenu>
+            <ContextMenu>
+                <MenuItem x:Name="Folder_Remove" Header="삭제" Click="Folder_Remove_Click" />
+                <MenuItem x:Name="Folder_Open" Header="열기" Click="Folder_Open_Click" />
+            </ContextMenu>
+        </DockPanel.ContextMenu>
         <Border x:Name="border" Background="LightGray" DockPanel.Dock="Left">
             <Image x:Name="thumbNail" VerticalAlignment="Stretch" Width="100">
                 <Image.OpacityMask>
                     <ImageBrush x:Name="thumbBrush"/>
                 </Image.OpacityMask>
-                <!--<Image.ToolTip>
-                    <ToolTip Placement="Bottom">
-                        <ToolTip.Template>
-                            <ControlTemplate>
-                                <StackPanel>
-                                    <Border BorderThickness="1">
-                                        <Image Height="100" Width="80" />
-                                    </Border>
-                                </StackPanel>
-                            </ControlTemplate>
-                        </ToolTip.Template>
-                    </ToolTip>
-                </Image.ToolTip>-->
             </Image>
         </Border>
         <DockPanel x:Name="InfoPanel" HorizontalAlignment="Stretch" DockPanel.Dock="Right">

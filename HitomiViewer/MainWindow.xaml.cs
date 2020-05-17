@@ -19,6 +19,7 @@ using Path = System.IO.Path;
 using Bitmap = System.Drawing.Bitmap;
 using System.Windows.Controls.Primitives;
 using System.Windows.Threading;
+using System.Threading;
 
 namespace HitomiViewer
 {
@@ -31,7 +32,9 @@ namespace HitomiViewer
             Name,
             Creation,
             LastWrite,
-            Size
+            Size,
+            Pages,
+            SizePerPage
         }
 
         public readonly string rootDir = AppDomain.CurrentDomain.BaseDirectory;
@@ -155,7 +158,8 @@ namespace HitomiViewer
                         page = innerFiles.Length,
                         thumb = new BitmapImage(new Uri(innerFiles.First()))
                     };
-                    MainPanel.Children.Add(new HitomiPanel(h));
+                    MainPanel.Children.Add(new HitomiPanel(h, this));
+                    h.thumb = null;
                     Console.WriteLine("Completed: {0}", innerFiles.First());
                 }));
             }
@@ -208,7 +212,8 @@ namespace HitomiViewer
                         page = innerFiles.Length,
                         thumb = new BitmapImage(new Uri(innerFiles.First()))
                     };
-                    MainPanel.Children.Add(new HitomiPanel(h));
+                    MainPanel.Children.Add(new HitomiPanel(h, this));
+                    h.thumb = null;
                     Console.WriteLine("Completed: {0}", innerFiles.First());
                 }));
             }
@@ -217,6 +222,34 @@ namespace HitomiViewer
                 label.Visibility = Visibility.Hidden;
             }));
             GC.Collect();
+        }
+
+        public void RemoveChild(HitomiPanel panel, string dir)
+        {
+            MainPanel.Children.Clear();
+            Thread thread = new Thread(() =>
+            {
+                while (true)
+                {
+                    try
+                    {
+                        Console.WriteLine("GC Check");
+                        Directory.Delete(dir, true);
+                        Console.WriteLine("Removed");
+                        LoadHitomi(path);
+                        break;
+                    }
+                    catch
+                    {
+                        Console.WriteLine("GC Fail");
+                        Console.WriteLine("GC Run");
+                        GC.Collect();
+                        GC.WaitForPendingFinalizers();
+                        Thread.Sleep(2000);
+                    }
+                }
+            });
+            thread.Start();
         }
 
         private void SetColor()
@@ -268,9 +301,40 @@ namespace HitomiViewer
                         return arr2.Select(f => f.FullName).ToArray();
                     };
                     break;
+                case FolderSorts.Pages:
+                    FolderSort = (string[] arr) =>
+                    {
+                        var arr2 = arr.ToArray();
+                        Array.Sort(arr2, delegate (string x, string y)
+                        {
+                            long xlen = Directory.GetFiles(x).Length;
+                            long ylen = Directory.GetFiles(y).Length;
+                            if (xlen == ylen) return 0;
+                            if (xlen > ylen) return 1;
+                            if (xlen < ylen) return -1;
+                            return 0;
+                        });
+                        return arr2.ToArray();
+                    };
+                    break;
+                case FolderSorts.SizePerPage:
+                    FolderSort = (string[] arr) =>
+                    {
+                        var arr2 = arr.Select(f => new DirectoryInfo(f)).ToArray();
+                        Array.Sort(arr2, delegate (DirectoryInfo x, DirectoryInfo y)
+                        {
+                            long xlen = x.EnumerateFiles().Sum(f => f.Length) / x.GetFiles().Length;
+                            long ylen = y.EnumerateFiles().Sum(f => f.Length) / y.GetFiles().Length;
+                            if (xlen == ylen) return 0;
+                            if (xlen > ylen) return 1;
+                            if (xlen < ylen) return -1;
+                            return 0;
+                        });
+                        return arr2.Select(f => f.FullName).ToArray();
+                    };
+                    break;
             }
         }
-
         private void MenuItem_Checked(object sender, RoutedEventArgs e)
         {
             Global.background = Colors.Black;
@@ -375,6 +439,12 @@ namespace HitomiViewer
                 case 3:
                     SortTypes = FolderSorts.Size;
                     break;
+                case 4:
+                    SortTypes = FolderSorts.Pages;
+                    break;
+                case 5:
+                    SortTypes = FolderSorts.SizePerPage;
+                    break;
             }
             SetFolderSort(SortTypes);
             new TaskFactory().StartNew(() => LoadHitomi(path));
@@ -392,14 +462,12 @@ namespace HitomiViewer
             Page_itemCount = uint.Parse(((ComboBoxItem)Page_ItemCount.SelectedItem).Content.ToString());
             new TaskFactory().StartNew(() => LoadHitomi(path));
         }
-
         private void Search_Button_Click(object sender, RoutedEventArgs e)
         {
             string SearchText = Search_Text.Text;
             string[] files = Directory.GetDirectories(path).Where(x => x.RemoveSpace().Contains(SearchText.RemoveSpace())).ToArray();
             new TaskFactory().StartNew(() => LoadHitomi(files));
         }
-
         private void Search_Text_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)

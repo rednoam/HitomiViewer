@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,12 +23,20 @@ namespace HitomiViewer
     {
         private Hitomi h;
         private BitmapImage thumb;
-        public HitomiPanel(Hitomi h)
+        private MainWindow MainWindow;
+        public HitomiPanel(Hitomi h, MainWindow sender)
         {
             this.h = h;
             this.thumb = h.thumb;
+            this.MainWindow = sender;
             InitializeComponent();
+            InitEvent();
             Init();
+        }
+
+        private void InitEvent()
+        {
+            
         }
 
         private void Init()
@@ -46,7 +55,28 @@ namespace HitomiViewer
             nameLabel.Content = System.IO.Path.GetFileName(h.dir);
 
             pageLabel.Content = h.page + "p";
-            sizeLabel.Content = Math.Round((double)new System.IO.DirectoryInfo(h.dir).EnumerateFiles().Sum(f => f.Length) / 1048576, 2)+"MB";
+
+            int GB = 1024 * 1024 * 1024;
+            int MB = 1024 * 1024;
+            int KB = 1024;
+            DirectoryInfo info = new DirectoryInfo(h.dir);
+            double FolderByte = info.EnumerateFiles().Sum(f => f.Length);
+            sizeLabel.Content = Math.Round(FolderByte, 2) + "B";
+            if (FolderByte > KB)
+                sizeLabel.Content = Math.Round(FolderByte / KB, 2) + "KB";
+            if (FolderByte > MB)
+                sizeLabel.Content = Math.Round(FolderByte / MB, 2)+"MB";
+            if (FolderByte > GB)
+                sizeLabel.Content = Math.Round(FolderByte / GB, 2) + "GB";
+
+            double SizePerPage = FolderByte / info.GetFiles().Length;
+            sizeperpageLabel.Content = Math.Round(SizePerPage, 2) + "B";
+            if (SizePerPage > KB)
+                sizeperpageLabel.Content = Math.Round(SizePerPage / KB, 2) + "KB";
+            if (SizePerPage > MB)
+                sizeperpageLabel.Content = Math.Round(SizePerPage / MB, 2) + "MB";
+            if (SizePerPage > GB)
+                sizeperpageLabel.Content = Math.Round(SizePerPage / GB, 2) + "GB";
 
             ChangeColor(this);
         }
@@ -99,6 +129,16 @@ namespace HitomiViewer
             nameLabel.Foreground = new SolidColorBrush(Global.fontscolor);
             sizeLabel.Foreground = new SolidColorBrush(Global.fontscolor);
             pageLabel.Foreground = new SolidColorBrush(Global.fontscolor);
+        }
+
+        private void Folder_Remove_Click(object sender, RoutedEventArgs e)
+        {
+            MainWindow.RemoveChild(this, h.dir);
+        }
+
+        private void Folder_Open_Click(object sender, RoutedEventArgs e)
+        {
+            System.Diagnostics.Process.Start(h.dir);
         }
     }
 }

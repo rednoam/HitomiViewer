@@ -50,6 +50,7 @@ namespace HitomiViewer
             this.image.Source = hitomi.thumb;
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
             this.hitomi.files = Directory.GetFiles(this.hitomi.dir).Where(file => allowedExtensions.Any(file.ToLower().EndsWith)).ToArray().ESort().ToArray();
+            if (hitomi.thumb == null) this.image.Source = ImageSourceLoad(hitomi.files[0]);
             new TaskFactory().StartNew(() => {
                 System.Threading.Thread.Sleep(100);
                 Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate
