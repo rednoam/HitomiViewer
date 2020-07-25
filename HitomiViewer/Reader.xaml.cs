@@ -49,7 +49,8 @@ namespace HitomiViewer
             this.Closing += (object sender, System.ComponentModel.CancelEventArgs e) => window.Readers.Remove(this);
             this.image.Source = hitomi.thumb;
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
-            this.hitomi.files = Directory.GetFiles(this.hitomi.dir).Where(file => allowedExtensions.Any(file.ToLower().EndsWith)).ToArray().ESort().ToArray();
+            if (this.hitomi.files == null)
+                this.hitomi.files = Directory.GetFiles(this.hitomi.dir).Where(file => allowedExtensions.Any(file.ToLower().EndsWith)).ToArray().ESort().ToArray();
             if (hitomi.thumb == null) this.image.Source = ImageSourceLoad(hitomi.files[0]);
             new TaskFactory().StartNew(() => {
                 System.Threading.Thread.Sleep(100);
@@ -190,7 +191,19 @@ namespace HitomiViewer
 
         private void SetImage(string link)
         {
-            image.Source = ImageSourceLoad(link);
+            Uri uriResult;
+            bool result = Uri.TryCreate(link, UriKind.Absolute, out uriResult)
+                && ((uriResult.Scheme == Uri.UriSchemeHttp) || (uriResult.Scheme == Uri.UriSchemeHttps));
+            if (result)
+            {
+                if (hitomi.images == null)
+                    hitomi.images = new BitmapImage[hitomi.page];
+                if (hitomi.images[page] == null)
+                    hitomi.images[page] = LoadWebImage(link);
+                image.Source = hitomi.images[page];
+            }
+            if (!result)
+                image.Source = ImageSourceLoad(link);
 
             //Bitmap test = new Bitmap(link);
             //image.Source = ImageSourceFromBitmap(test);
@@ -262,6 +275,27 @@ namespace HitomiViewer
             catch
             {
                 return ImageSourceFromBitmap(bmp);
+            }
+        }
+
+        private BitmapImage LoadWebImage(string url)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(url))
+                    return null;
+                System.Net.WebClient wc = new System.Net.WebClient();
+                Byte[] MyData = wc.DownloadData(url);
+                wc.Dispose();
+                BitmapImage bimgTemp = new BitmapImage();
+                bimgTemp.BeginInit();
+                bimgTemp.StreamSource = new MemoryStream(MyData);
+                bimgTemp.EndInit();
+                return bimgTemp;
+            }
+            catch
+            {
+                return null;
             }
         }
 

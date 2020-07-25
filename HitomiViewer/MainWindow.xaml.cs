@@ -20,6 +20,9 @@ using Bitmap = System.Drawing.Bitmap;
 using System.Windows.Controls.Primitives;
 using System.Windows.Threading;
 using System.Threading;
+using HitomiViewer.Scripts;
+using Newtonsoft.Json.Linq;
+using System.Diagnostics;
 
 namespace HitomiViewer
 {
@@ -117,57 +120,8 @@ namespace HitomiViewer
 
         public void LoadHitomi(string path)
         {
-            Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate { label.Visibility = Visibility.Visible; }));
             string[] @NotSorted = Directory.GetDirectories(path);
-            if (NotSorted.Length <= 0)
-            {
-                Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate { label.Visibility = Visibility.Hidden; }));
-                return;
-            }
-            string[] Folders = FolderSort(NotSorted);
-            Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate
-            {
-                this.Background = new SolidColorBrush(Global.background);
-                MainPanel.Children.Clear();
-                if (SearchMode2.SelectedIndex == 1)
-                    Folders = Folders.Reverse().ToArray();
-            }));
-            int i = 0;
-            int SelectedPage = 1;
-            Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
-            {
-                SelectedPage = Page_Index.SelectedIndex + 1;
-                this.Title = string.Format("MainWindow - {0}페이지", SelectedPage);
-            }));
-            foreach (string folder in Folders.Where(x => Array.IndexOf(Folders, x) + 1 <= Page_itemCount * SelectedPage && Array.IndexOf(Folders, x) + 1 > (SelectedPage - 1) * Page_itemCount))
-            {
-                i++;
-                Console.WriteLine("{0}: {1}", i, folder);
-                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
-                @NotSorted = Directory.GetFiles(folder).Where(file => allowedExtensions.Any(file.ToLower().EndsWith)).ToArray().ESort().ToArray();
-                if (NotSorted.Length <= 0) continue;
-                Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate
-                {
-                    label.FontSize = 100;
-                    label.Content = i + "/" + Page_itemCount;
-                    string[] innerFiles = NotSorted.ESort().ToArray();
-                    Hitomi h = new Hitomi
-                    {
-                        name = folder.Split(Path.DirectorySeparatorChar).Last(),
-                        dir = folder,
-                        page = innerFiles.Length,
-                        thumb = new BitmapImage(new Uri(innerFiles.First()))
-                    };
-                    MainPanel.Children.Add(new HitomiPanel(h, this));
-                    h.thumb = null;
-                    Console.WriteLine("Completed: {0}", innerFiles.First());
-                }));
-            }
-            Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate
-            {
-                label.Visibility = Visibility.Hidden;
-            }));
-            GC.Collect();
+            LoadHitomi(NotSorted);
         }
 
         public void LoadHitomi(string[] files)
@@ -212,6 +166,8 @@ namespace HitomiViewer
                         page = innerFiles.Length,
                         thumb = new BitmapImage(new Uri(innerFiles.First()))
                     };
+                    h.FolderByte = GetFolderByte(folder);
+                    h.SizePerPage = GetSizePerPage(folder);
                     MainPanel.Children.Add(new HitomiPanel(h, this));
                     h.thumb = null;
                     Console.WriteLine("Completed: {0}", innerFiles.First());
@@ -250,6 +206,50 @@ namespace HitomiViewer
                 }
             });
             thread.Start();
+        }
+
+        public double GetFolderByte(string dir)
+        {
+            DirectoryInfo info = new DirectoryInfo(dir);
+            double FolderByte = info.EnumerateFiles().Sum(f => f.Length);
+            return FolderByte;
+        }
+
+        public double GetSizePerPage(string dir)
+        {
+            DirectoryInfo info = new DirectoryInfo(dir);
+            double FolderByte = info.EnumerateFiles().Sum(f => f.Length);
+            double SizePerPage = FolderByte / info.GetFiles().Length;
+            return SizePerPage;
+        }
+
+        public long GetWebSize(string url)
+        {
+            System.Net.WebClient client = new System.Net.WebClient();
+            client.OpenRead(url);
+            long bytes_total = Convert.ToInt64(client.ResponseHeaders["Content-Length"]);
+            return bytes_total;
+        }
+
+        public BitmapImage LoadImage(string url)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(url))
+                    return null;
+                System.Net.WebClient wc = new System.Net.WebClient();
+                Byte[] MyData = wc.DownloadData(url);
+                wc.Dispose();
+                BitmapImage bimgTemp = new BitmapImage();
+                bimgTemp.BeginInit();
+                bimgTemp.StreamSource = new MemoryStream(MyData);
+                bimgTemp.EndInit();
+                return bimgTemp;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private void SetColor()
@@ -476,6 +476,53 @@ namespace HitomiViewer
                 string[] files = Directory.GetDirectories(path).Where(x => x.RemoveSpace().Contains(SearchText.RemoveSpace())).ToArray();
                 new TaskFactory().StartNew(() => LoadHitomi(files));
             }
+        }
+        private void MenuHiyobi_Click(object sender, RoutedEventArgs e)
+        {
+            InternetP parser = new InternetP();
+            int index = (int)new CountBox("페이지", "원하는 페이지 수", 1).ShowDialog();
+            parser.url = "https://api.hiyobi.me/list/" + index;
+            parser.ParseHiyobi(async (JObject jObject) =>
+            {
+                MainPanel.Children.Clear();
+                foreach (JToken tk in jObject["list"])
+                {
+                    parser.url = $"https://cdn.hiyobi.me/data/json/{tk["id"]}_list.json";
+                    JArray imgs = await parser.ParseJArray();
+                    Hitomi h = new Hitomi
+                    {
+                        name = tk["title"].ToString(),
+                        dir = $"https://hiyobi.me/reader/{tk["id"]}",
+                        page = imgs.Count,
+                        thumb = LoadImage($"https://cdn.hiyobi.me/tn/{tk["id"]}.jpg")
+                    };
+                    Int64 size = 0;
+                    h.files = imgs.ToList().Select(x => $"https://cdn.hiyobi.me/data/{tk["id"]}/{x["name"]}").ToArray();
+                    h.FolderByte = size;
+                    h.SizePerPage = size / imgs.Count;
+                    foreach(JToken tags in tk["tags"])
+                    {
+                        HitomiPanel.HitomiInfo.Tag tag = new HitomiPanel.HitomiInfo.Tag();
+                        if (tags["value"].ToString().Contains(":"))
+                        {
+                            tag.types = (HitomiViewer.Tag.Types)Enum.Parse(typeof(HitomiViewer.Tag.Types), tags["value"].ToString().Split(':')[0]);
+                            tag.name = tags["display"].ToString();
+                        }
+                        else
+                        {
+                            tag.types = HitomiViewer.Tag.Types.tag;
+                            tag.name = tags["display"].ToString();
+                        }
+                        h.tags.Add(tag);
+                    }
+                    MainPanel.Children.Add(new HitomiPanel(h, this));
+                    Console.WriteLine($"Completed: https://cdn.hiyobi.me/tn/{tk["id"]}.jpg");
+                }
+            });
+        }
+        private void MenuHitomi_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

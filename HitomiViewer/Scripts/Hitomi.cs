@@ -1,16 +1,23 @@
 ﻿using ExtensionMethods;
+using HitomiViewer.Style;
+using System.Collections.Generic;
 using System.Linq;
+using System.Windows.Documents;
 using System.Windows.Media.Imaging;
+using static HitomiViewer.HitomiPanel;
 
 namespace HitomiViewer
 {
     public class Hitomi
     {
+        public List<HitomiInfo.Tag> tags = new List<HitomiInfo.Tag>();
         public string name;
         public string dir;
         public int page;
         public string[] files;
         public string thumbpath;
+        public double FolderByte;
+        public double SizePerPage;
         public BitmapImage thumb;
         public BitmapImage[] images;
 
@@ -22,6 +29,8 @@ namespace HitomiViewer
             h.page = hitomi.page;
             h.files = hitomi.files;
             h.thumbpath = hitomi.thumbpath;
+            h.FolderByte = hitomi.FolderByte;
+            h.SizePerPage = hitomi.SizePerPage;
             h.thumb = hitomi.thumb;
             h.images = hitomi.images;
             return h;

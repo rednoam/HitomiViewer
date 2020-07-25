@@ -53,6 +53,18 @@
                             </ComboBox>
                         </MenuItem>
                     </MenuItem>
+                    <MenuItem Header="인터넷" x:Name="InternetMenu" Background="White">
+                        <MenuItem x:Name="MenuHiyobi" Header="Hiyobi.me" Click="MenuHiyobi_Click">
+                            <MenuItem.Icon>
+                                <Image Source="https://hiyobi.me/favicon.ico"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem x:Name="MenuHitomi" Header="Hitomi.la" Click="MenuHitomi_Click">
+                            <MenuItem.Icon>
+                                <Image Source="https://ltn.hitomi.la/favicon-16x16.png"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                    </MenuItem>
                 </Menu>
                 <Grid Grid.Column="1">
                     <Grid.ColumnDefinitions>
