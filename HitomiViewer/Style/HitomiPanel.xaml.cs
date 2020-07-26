@@ -83,7 +83,9 @@ namespace HitomiViewer
                 sizeperpageLabel.Content = Math.Round(SizePerPage / GB, 2) + "GB";
 
             ChangeColor(this);
-
+            Uri uriResult;
+            bool result = Uri.TryCreate(h.dir, UriKind.Absolute, out uriResult)
+                && ((uriResult.Scheme == Uri.UriSchemeHttp) || (uriResult.Scheme == Uri.UriSchemeHttps));
             if (h.tags.Count > 0)
             {
                 foreach (HitomiInfo.Tag tag in h.tags)
@@ -108,6 +110,10 @@ namespace HitomiViewer
                     }
                     tagPanel.Children.Add(tag1);
                 }
+            }
+            else if (result)
+            {
+
             }
             else if (File.Exists(System.IO.Path.Combine(h.dir, "info.txt")))
             {

@@ -16,6 +16,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using WebPWrapper;
 
 namespace HitomiViewer
 {
@@ -137,7 +138,12 @@ namespace HitomiViewer
                             if (hitomi.images == null)
                                 hitomi.images = new BitmapImage[hitomi.page];
                             if (hitomi.images[i] == null)
-                                hitomi.images[i] = await LoadWebImageAsync(hitomi.files[i]);
+                            {
+                                if (hitomi.files[i].EndsWith(".webp"))
+                                    hitomi.images[i] = await LoadWebP(hitomi.files[i]);
+                                else
+                                    hitomi.images[i] = await LoadWebImageAsync(hitomi.files[i]);
+                            }
                         }
                     }
                     catch { }
@@ -179,7 +185,12 @@ namespace HitomiViewer
                 if (hitomi.images == null)
                     hitomi.images = new BitmapImage[hitomi.page];
                 if (hitomi.images[copypage] == null)
-                    hitomi.images[copypage] = await LoadWebImageAsync(link);
+                {
+                    if (link.EndsWith(".webp"))
+                        hitomi.images[copypage] = await LoadWebP(link);
+                    else
+                        hitomi.images[copypage] = await LoadWebImageAsync(link);
+                }
                 if (copypage == page)
                     image.Source = hitomi.images[page];
             }
@@ -323,7 +334,32 @@ namespace HitomiViewer
                 callback(null);
             }
         }
-
+        private async Task<BitmapImage> LoadWebP(string url)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(url))
+                    return null;
+                System.Net.WebClient wc = new System.Net.WebClient();
+                wc.Headers.Add("Referer", "https://hitomi.la/");
+                Byte[] MyData = await wc.DownloadDataTaskAsync(url);
+                wc.Dispose();
+                WebP webP = new WebP();
+                Bitmap bitmap = webP.Decode(MyData);
+                MemoryStream ms = new MemoryStream();
+                bitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Bmp);
+                var bi = new BitmapImage();
+                bi.BeginInit();
+                bi.StreamSource = ms;
+                bi.CacheOption = BitmapCacheOption.OnLoad;
+                bi.EndInit();
+                return bi;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
         private ImageSource ImageSourceLoad(string path, int pause = 0)
         {
             Console.WriteLine("{0}\n{1}", path, pause);

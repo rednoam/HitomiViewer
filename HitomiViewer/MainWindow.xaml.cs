@@ -583,9 +583,27 @@ namespace HitomiViewer
                 }
             }));
         }
-        private void MenuHitomi_Click(object sender, RoutedEventArgs e)
+        private async void MenuHitomi_Click(object sender, RoutedEventArgs e)
         {
-
+            MainPanel.Children.Clear();
+            InternetP parser = new InternetP();
+            parser.index = 0;
+            parser.count = unchecked((int)this.Page_itemCount);
+            parser.url = "https://ltn.hitomi.la/index-all.nozomi";
+            int[] ids = parser.ByteArrayToIntArray(await parser.LoadNozomi());
+            foreach (int id in ids)
+            {
+                parser.url = $"https://ltn.hitomi.la/galleryblock/{id}.html";
+                parser.index = id;
+                Hitomi h = await parser.HitomiData();
+                parser.url = $"https://ltn.hitomi.la/galleries/{id}.js";
+                JObject info = await parser.HitomiGalleryInfo();
+                h.tags = parser.HitomiTags(info);
+                h.files = parser.HitomiFiles(info).ToArray();
+                h.page = h.files.Length;
+                h.thumb = LoadImage("https:"+h.thumbpath);
+                MainPanel.Children.Add(new HitomiPanel(h, this));
+            }
         }
         private void Hitomi_Search_Text_KeyDown(object sender, KeyEventArgs e)
         {
