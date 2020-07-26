@@ -105,7 +105,8 @@ namespace HitomiViewer
             this.Background = new SolidColorBrush(Global.background);
             MainPanel.Children.Clear();
             if (!Directory.Exists(path))
-                path = new InputBox("불러올 하위 폴더이름", "폴더 지정", "폴더 이름").ShowDialog();
+                Directory.CreateDirectory(path);
+                //path = new InputBox("불러올 하위 폴더이름", "폴더 지정", "폴더 이름").ShowDialog();
             int pages = Directory.GetDirectories(path).Length / 25 + 1;
             for (int i = 0; i < pages; i++)
             {
@@ -587,7 +588,8 @@ namespace HitomiViewer
         {
             MainPanel.Children.Clear();
             InternetP parser = new InternetP();
-            parser.index = 0;
+            int index = (int)new CountBox("페이지", "원하는 페이지 수", 1).ShowDialog();
+            parser.index = (index - 1) * unchecked((int)this.Page_itemCount);
             parser.count = unchecked((int)this.Page_itemCount);
             parser.url = "https://ltn.hitomi.la/index-all.nozomi";
             int[] ids = parser.ByteArrayToIntArray(await parser.LoadNozomi());
@@ -598,6 +600,7 @@ namespace HitomiViewer
                 Hitomi h = await parser.HitomiData();
                 parser.url = $"https://ltn.hitomi.la/galleries/{id}.js";
                 JObject info = await parser.HitomiGalleryInfo();
+                h.type = Hitomi.Type.Hitomi;
                 h.tags = parser.HitomiTags(info);
                 h.files = parser.HitomiFiles(info).ToArray();
                 h.page = h.files.Length;

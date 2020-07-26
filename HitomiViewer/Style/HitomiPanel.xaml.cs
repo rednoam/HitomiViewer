@@ -115,6 +115,17 @@ namespace HitomiViewer
             {
 
             }
+            else if (File.Exists(System.IO.Path.Combine(h.dir, "info.json")))
+            {
+                JObject jobject = JObject.Parse(File.ReadAllText(System.IO.Path.Combine(h.dir, "info.json")));
+                foreach (JToken tags in jobject["tags"])
+                {
+                    tag tag = new tag();
+                    tag.TagType = (HitomiViewer.Tag.Types)int.Parse(tags["types"].ToString());
+                    tag.TagName = tags["name"].ToString();
+                    tagPanel.Children.Add(tag);
+                }
+            }
             else if (File.Exists(System.IO.Path.Combine(h.dir, "info.txt")))
             {
                 HitomiInfoOrg hitomiInfoOrg = new HitomiInfoOrg();
@@ -183,17 +194,20 @@ namespace HitomiViewer
                 }
             }
 
-            Folder_Open.Visibility = Visibility.Collapsed;
+            //Folder_Open.Visibility = Visibility.Collapsed;
             Folder_Remove.Visibility = Visibility.Collapsed;
             Hiyobi_Download.Visibility = Visibility.Collapsed;
+            Hitomi_Download.Visibility = Visibility.Collapsed;
             switch (h.type)
             {
                 case Hitomi.Type.Folder:
-                    Folder_Open.Visibility = Visibility.Visible;
                     Folder_Remove.Visibility = Visibility.Visible;
                     break;
                 case Hitomi.Type.Hiyobi:
                     Hiyobi_Download.Visibility = Visibility.Visible;
+                    break;
+                case Hitomi.Type.Hitomi:
+                    Hitomi_Download.Visibility = Visibility.Visible;
                     break;
             }
         }
@@ -271,6 +285,8 @@ namespace HitomiViewer
             {
                 string filename = h.name.Replace("|", "｜");
                 Directory.CreateDirectory($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}");
+                JObject jobject = JObject.FromObject(h);
+                //File.WriteAllText($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/info.json", jobject.ToString());
                 for (int i = 0; i < h.files.Length; i++)
                 {
                     string file = h.files[i];
@@ -278,6 +294,26 @@ namespace HitomiViewer
                     if (!File.Exists($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg"))
                         wc.DownloadFileAsync(new Uri(file), $"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg");
                 }
+                System.Diagnostics.Process.Start($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}");
+            });
+        }
+        private void Hitomi_Download_Click(object sender, RoutedEventArgs e)
+        {
+            Task.Factory.StartNew(() =>
+            {
+                string filename = h.name.Replace("|", "｜");
+                Directory.CreateDirectory($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}");
+                JObject jobject = JObject.FromObject(h);
+                File.WriteAllText($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/info.json", jobject.ToString());
+                for (int i = 0; i < h.files.Length; i++)
+                {
+                    string file = h.files[i];
+                    WebClient wc = new WebClient();
+                    wc.Headers.Add("referer", "https://hitomi.la/");
+                    if (!File.Exists($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg"))
+                        wc.DownloadFileAsync(new Uri(file), $"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg");
+                }
+                System.Diagnostics.Process.Start($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}");
             });
         }
 
@@ -293,7 +329,6 @@ namespace HitomiViewer
             public string Tags { get; set; }
             public string Language { get; set; }
         }
-
         public class HitomiInfo
         {
             public static HitomiInfo Parse(HitomiInfoOrg org)

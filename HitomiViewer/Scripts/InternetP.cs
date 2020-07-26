@@ -118,7 +118,8 @@ namespace HitomiViewer.Scripts
             HtmlDocument doc = new HtmlDocument();
             doc.LoadHtml(html);
             Hitomi h = new Hitomi();
-            h.dir = url;
+            h.dir = $"https://hitomi.la/reader/{index}.html";
+            //h.dir = url;
             HtmlNode name = doc.DocumentNode.SelectSingleNode("//h1[@class=\"lillie\"]");
             h.name = name.InnerText;
             HtmlNode image = doc.DocumentNode.SelectSingleNode("//div[@class=\"dj-img1\"]/img");
@@ -183,7 +184,7 @@ namespace HitomiViewer.Scripts
         {
             if (url.Last() == '/') url = url.Remove(url.Length - 1);
             HttpClient client = new HttpClient();
-            client.DefaultRequestHeaders.Range = new System.Net.Http.Headers.RangeHeaderValue(index * 4, count * 4 - 1);
+            client.DefaultRequestHeaders.Range = new System.Net.Http.Headers.RangeHeaderValue(index * 4, (index + count) * 4 - 1);
             var response = await client.GetAsync(url);
             var pageContents = await response.Content.ReadAsByteArrayAsync();
             return pageContents;
