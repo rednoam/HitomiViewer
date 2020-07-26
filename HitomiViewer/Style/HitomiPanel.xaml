@@ -11,6 +11,7 @@
             <ContextMenu>
                 <MenuItem x:Name="Folder_Remove" Header="삭제" Click="Folder_Remove_Click" />
                 <MenuItem x:Name="Folder_Open" Header="열기" Click="Folder_Open_Click" />
+                <MenuItem x:Name="Hiyobi_Download" Header="다운로드" Click="Hiyobi_Download_Click" />
             </ContextMenu>
         </DockPanel.ContextMenu>
         <Border x:Name="border" Background="LightGray" DockPanel.Dock="Left">

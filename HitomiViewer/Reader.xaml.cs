@@ -46,7 +46,11 @@ namespace HitomiViewer
         void Init()
         {
             this.window.Readers.Add(this);
-            this.Closing += (object sender, System.ComponentModel.CancelEventArgs e) => window.Readers.Remove(this);
+            this.Closing += (object sender, System.ComponentModel.CancelEventArgs e) =>
+            {
+                window.Readers.Remove(this);
+                hitomi.images = new BitmapImage[] { };
+            };
             this.image.Source = hitomi.thumb;
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
             if (this.hitomi.files == null)
@@ -68,7 +72,7 @@ namespace HitomiViewer
             this.Background = new SolidColorBrush(Global.background);
         }
 
-        private void Image_KeyDown(object sender, KeyEventArgs e)
+        private async void Image_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Right)
             {
@@ -89,15 +93,6 @@ namespace HitomiViewer
                 PreLoad();
                 SetImage(hitomi.files[page]);
             }
-            /*else if (e.Key == Key.Space)
-            {
-                image.Source = hitomi.images[page];
-                TestImageBox imageBox = new TestImageBox();
-                imageBox.image1.Source = new BitmapImage(new Uri(hitomi.files[page]));
-                imageBox.Show();
-                Clipboard.SetImage(new BitmapImage(new Uri(hitomi.files[page])));
-                MessageBox.Show(hitomi.files[page]);
-            }*/
             this.Title = hitomi.name;
             if (e.Key == Key.F11)
             {
@@ -120,14 +115,6 @@ namespace HitomiViewer
                     this.WindowState = WindowState.Maximized;
                 }
             }
-            else if (e.Key == Key.F9)
-            {
-                this.hitomi = Hitomi.GetHitomi(hitomi.dir, Global.basicPatturn);
-                this.hitomi.files = Directory.GetFiles(this.hitomi.dir, "*.jpg").ESort().ToArray();
-                this.page = 0;
-                this.image.Source = new BitmapImage(new Uri(this.hitomi.files[page]));
-                MessageBox.Show("다시 로드됨.");
-            }
             else if (e.Key == Key.Escape)
             {
                 if (WindowStyle == WindowStyle.None && WindowState == WindowState.Maximized)
@@ -136,35 +123,26 @@ namespace HitomiViewer
                     this.WindowState = WindowState.Normal;
                 }
             }
-            else if (e.Key == Key.F8)
+            else if (e.Key == Key.Enter)
             {
-                SetImage(new Uri(hitomi.files[page]));
-                MessageBox.Show("(페이지만)다시 로드됨.");
+                Uri uriResult;
+                bool result = Uri.TryCreate(hitomi.dir, UriKind.Absolute, out uriResult)
+                    && ((uriResult.Scheme == Uri.UriSchemeHttp) || (uriResult.Scheme == Uri.UriSchemeHttps));
+                if (result) {
+                    try
+                    {
+                        for (int i = 0; i < hitomi.files.Length; i++)
+                        {
+                            this.Title = hitomi.name + " " + i + "/" + (hitomi.files.Length - 1);
+                            if (hitomi.images == null)
+                                hitomi.images = new BitmapImage[hitomi.page];
+                            if (hitomi.images[i] == null)
+                                hitomi.images[i] = await LoadWebImageAsync(hitomi.files[i]);
+                        }
+                    }
+                    catch { }
+                }
             }
-            else if (e.Key == Key.F7)
-            {
-                this.page = int.Parse(new InputBox("페이지: ").ShowDialog());
-                MessageBox.Show("(페이지)"+this.page);
-            }
-            else if (e.Key == Key.R)
-            {
-                window.label.FontSize = 100;
-                window.label.Content = "로딩중";
-                window.label.Visibility = Visibility.Visible;
-                this.Background = new SolidColorBrush(Global.background);
-                window.MainPanel.Children.Clear();
-                new TaskFactory().StartNew(() => window.LoadHitomi(window.path));
-                string[] innerFiles = System.IO.Directory.GetFiles(hitomi.dir, "*.jpg").ESort().ToArray();
-                hitomi = new Hitomi
-                {
-                    name = hitomi.dir.Split(System.IO.Path.DirectorySeparatorChar).Last(),
-                    dir = hitomi.dir,
-                    page = innerFiles.Length,
-                    thumb = new BitmapImage(new Uri(innerFiles.First()))
-                };
-                SetImage(new Uri(hitomi.files[page]));
-            }
-            //MessageBox.Show(e.Key.ToString());
         }
 
         private void SetImage(Uri link)
@@ -189,18 +167,21 @@ namespace HitomiViewer
             image.Source = src;
         }
 
-        private void SetImage(string link)
+        private async void SetImage(string link)
         {
             Uri uriResult;
             bool result = Uri.TryCreate(link, UriKind.Absolute, out uriResult)
                 && ((uriResult.Scheme == Uri.UriSchemeHttp) || (uriResult.Scheme == Uri.UriSchemeHttps));
+            image.Source = new BitmapImage(new Uri("/Resources/loading2.png", UriKind.Relative)); 
             if (result)
             {
+                int copypage = page;
                 if (hitomi.images == null)
                     hitomi.images = new BitmapImage[hitomi.page];
-                if (hitomi.images[page] == null)
-                    hitomi.images[page] = LoadWebImage(link);
-                image.Source = hitomi.images[page];
+                if (hitomi.images[copypage] == null)
+                    hitomi.images[copypage] = await LoadWebImageAsync(link);
+                if (copypage == page)
+                    image.Source = hitomi.images[page];
             }
             if (!result)
                 image.Source = ImageSourceLoad(link);
@@ -243,7 +224,7 @@ namespace HitomiViewer
                 PreLoad();
                 SetImage(hitomi.files[page]);
             }
-            this.Title = hitomi.name;
+            //this.Title = hitomi.name;
         }
 
         private string ImageSourceToString(ImageSource imageSource) {
@@ -296,6 +277,50 @@ namespace HitomiViewer
             catch
             {
                 return null;
+            }
+        }
+        private async Task<BitmapImage> LoadWebImageAsync(string url)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(url))
+                    return null;
+                System.Net.WebClient wc = new System.Net.WebClient();
+                Byte[] MyData = await wc.DownloadDataTaskAsync(url);
+                wc.Dispose();
+                BitmapImage bimgTemp = new BitmapImage();
+                bimgTemp.BeginInit();
+                bimgTemp.StreamSource = new MemoryStream(MyData);
+                bimgTemp.EndInit();
+                return bimgTemp;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+        private void LoadWebImage(string url, Action<BitmapImage> callback)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(url))
+                    callback(null);
+                System.Net.WebClient wc = new System.Net.WebClient();
+                wc.DownloadDataAsync(new Uri(url));
+                wc.DownloadDataCompleted += (object sender, System.Net.DownloadDataCompletedEventArgs e) =>
+                {
+                    Byte[] MyData = e.Result;
+                    wc.Dispose();
+                    BitmapImage bimgTemp = new BitmapImage();
+                    bimgTemp.BeginInit();
+                    bimgTemp.StreamSource = new MemoryStream(MyData);
+                    bimgTemp.EndInit();
+                    callback(bimgTemp);
+                };
+            }
+            catch
+            {
+                callback(null);
             }
         }
 

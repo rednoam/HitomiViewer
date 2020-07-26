@@ -21,6 +21,9 @@
                         </LinearGradientBrush>
                     </Menu.Background>
                     <MenuItem Header="설정" x:Name="SettingMenu" Background="White">
+                        <MenuItem x:Name="LoadBtn" Header="불러오기" Click="LoadBtn_Click">
+                            
+                        </MenuItem>
                         <MenuItem x:Name="DarkMode" Header="_야간모드" IsCheckable="True" IsChecked="False" Checked="MenuItem_Checked" Unchecked="DarkMode_Unchecked"/>
                         <MenuItem x:Name="MenuPage" Header="페이지">
                             <MenuItem Header="쪽수"/>
@@ -54,15 +57,55 @@
                         </MenuItem>
                     </MenuItem>
                     <MenuItem Header="인터넷" x:Name="InternetMenu" Background="White">
-                        <MenuItem x:Name="MenuHiyobi" Header="Hiyobi.me" Click="MenuHiyobi_Click">
+                        <MenuItem x:Name="MenuHiyobi" Header="Hiyobi.me">
                             <MenuItem.Icon>
                                 <Image Source="https://hiyobi.me/favicon.ico"/>
                             </MenuItem.Icon>
+                            <MenuItem Header="메인화면" Click="MenuHiyobi_Click">
+                                <MenuItem.Icon>
+                                    <Image Source="https://hiyobi.me/favicon.ico"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem>
+                                <MenuItem.Icon>
+                                    <Image Source="https://hiyobi.me/favicon.ico"/>
+                                </MenuItem.Icon>
+                                <MenuItem.Header>
+                                    <Grid Width="200">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="8*" />
+                                            <ColumnDefinition Width="2*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox Grid.Column="0" Keyboard.KeyDown="Hiyobi_Search_Text_KeyDown" x:Name="Hiyobi_Search_Text"/>
+                                        <Button Grid.Column="1" Content="검색" Click="Hiyobi_Search_Button_Click" x:Name="Hiyobi_Search_Button"/>
+                                    </Grid>
+                                </MenuItem.Header>
+                            </MenuItem>
                         </MenuItem>
-                        <MenuItem x:Name="MenuHitomi" Header="Hitomi.la" Click="MenuHitomi_Click">
+                        <MenuItem x:Name="MenuHitomi" Header="Hitomi.la">
                             <MenuItem.Icon>
                                 <Image Source="https://ltn.hitomi.la/favicon-16x16.png"/>
                             </MenuItem.Icon>
+                            <MenuItem Header="메인화면" Click="MenuHitomi_Click">
+                                <MenuItem.Icon>
+                                    <Image Source="https://ltn.hitomi.la/favicon-16x16.png"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem>
+                                <MenuItem.Icon>
+                                    <Image Source="https://ltn.hitomi.la/favicon-16x16.png"/>
+                                </MenuItem.Icon>
+                                <MenuItem.Header>
+                                    <Grid Width="200">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="8*" />
+                                            <ColumnDefinition Width="2*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox Grid.Column="0" Keyboard.KeyDown="Hitomi_Search_Text_KeyDown" x:Name="Hitomi_Search_Text"/>
+                                        <Button Grid.Column="1" Content="검색" Click="Hitomi_Search_Button_Click" x:Name="Hitomi_Search_Button"/>
+                                    </Grid>
+                                </MenuItem.Header>
+                            </MenuItem>
                         </MenuItem>
                     </MenuItem>
                 </Menu>

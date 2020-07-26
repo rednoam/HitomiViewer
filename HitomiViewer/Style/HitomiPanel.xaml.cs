@@ -1,8 +1,12 @@
-﻿using HitomiViewer.Style;
+﻿using HitomiViewer.Scripts;
+using HitomiViewer.Style;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -172,6 +176,20 @@ namespace HitomiViewer
                     tagPanel.Children.Add(tag1);
                 }
             }
+
+            Folder_Open.Visibility = Visibility.Collapsed;
+            Folder_Remove.Visibility = Visibility.Collapsed;
+            Hiyobi_Download.Visibility = Visibility.Collapsed;
+            switch (h.type)
+            {
+                case Hitomi.Type.Folder:
+                    Folder_Open.Visibility = Visibility.Visible;
+                    Folder_Remove.Visibility = Visibility.Visible;
+                    break;
+                case Hitomi.Type.Hiyobi:
+                    Hiyobi_Download.Visibility = Visibility.Visible;
+                    break;
+            }
         }
 
         private ToolTip GetToolTip(double height)
@@ -237,10 +255,24 @@ namespace HitomiViewer
         {
             MainWindow.RemoveChild(this, h.dir);
         }
-
         private void Folder_Open_Click(object sender, RoutedEventArgs e)
         {
             System.Diagnostics.Process.Start(h.dir);
+        }
+        private void Hiyobi_Download_Click(object sender, RoutedEventArgs e)
+        {
+            Task.Factory.StartNew(() =>
+            {
+                string filename = h.name.Replace("|", "｜");
+                Directory.CreateDirectory($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}");
+                for (int i = 0; i < h.files.Length; i++)
+                {
+                    string file = h.files[i];
+                    WebClient wc = new WebClient();
+                    if (!File.Exists($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg"))
+                        wc.DownloadFileAsync(new Uri(file), $"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg");
+                }
+            });
         }
 
         public class HitomiInfoOrg

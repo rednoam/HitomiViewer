@@ -10,7 +10,16 @@ namespace HitomiViewer
 {
     public class Hitomi
     {
+        public enum Type
+        {
+            None,
+            Folder,
+            Hiyobi,
+            Hitomi
+        }
+
         public List<HitomiInfo.Tag> tags = new List<HitomiInfo.Tag>();
+        public string id;
         public string name;
         public string dir;
         public int page;
@@ -20,6 +29,7 @@ namespace HitomiViewer
         public double SizePerPage;
         public BitmapImage thumb;
         public BitmapImage[] images;
+        public Type type = Type.None;
 
         public static Hitomi Copy(Hitomi hitomi)
         {
