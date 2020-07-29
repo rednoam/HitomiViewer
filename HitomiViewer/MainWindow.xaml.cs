@@ -1,28 +1,20 @@
 ﻿using ExtensionMethods;
+using HitomiViewer.Scripts;
+using HitomiViewer.Scripts.Loaders;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using Path = System.IO.Path;
-using Bitmap = System.Drawing.Bitmap;
-using System.Windows.Controls.Primitives;
 using System.Windows.Threading;
-using System.Threading;
-using HitomiViewer.Scripts;
-using Newtonsoft.Json.Linq;
-using System.Diagnostics;
+using Path = System.IO.Path;
 
 namespace HitomiViewer
 {
@@ -31,7 +23,8 @@ namespace HitomiViewer
     /// </summary>
     public partial class MainWindow : Window
     {
-        enum FolderSorts{
+        enum FolderSorts
+        {
             Name,
             Creation,
             LastWrite,
@@ -40,9 +33,10 @@ namespace HitomiViewer
             SizePerPage
         }
 
-        public readonly string rootDir = AppDomain.CurrentDomain.BaseDirectory;
+        public static readonly string rootDir = AppDomain.CurrentDomain.BaseDirectory;
         public string path = string.Empty;
         public uint Page_itemCount = 25;
+        public int Page = 1;
         public Func<string[], string[]> FolderSort;
         public List<Reader> Readers = new List<Reader>();
         public MainWindow()
@@ -54,6 +48,7 @@ namespace HitomiViewer
 
         private void Init()
         {
+            CheckUpdate.Check();
             this.MinWidth = 300;
             Global.MainWindow = this;
             string[] args = Environment.GetCommandLineArgs();
@@ -61,7 +56,7 @@ namespace HitomiViewer
             for (int i = 0; i < args.Length; i++)
             {
                 string arg = args[i];
-                if (arg == "/p" && args.Length-1 > i)
+                if (arg == "/p" && args.Length - 1 > i)
                 {
                     if (relative) path = Path.Combine(rootDir, args[i + 1]);
                     else path = args[i + 1];
@@ -106,7 +101,7 @@ namespace HitomiViewer
             MainPanel.Children.Clear();
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
-                //path = new InputBox("불러올 하위 폴더이름", "폴더 지정", "폴더 이름").ShowDialog();
+            //path = new InputBox("불러올 하위 폴더이름", "폴더 지정", "폴더 이름").ShowDialog();
             int pages = Directory.GetDirectories(path).Length / 25 + 1;
             for (int i = 0; i < pages; i++)
             {
@@ -233,6 +228,11 @@ namespace HitomiViewer
             return bytes_total;
         }
 
+        public int GetPage()
+        {
+            return (int)new CountBox("페이지", "원하는 페이지 수", 1).ShowDialog();
+        }
+
         public BitmapImage LoadImage(string url)
         {
             try
@@ -256,7 +256,7 @@ namespace HitomiViewer
 
         private void SetColor()
         {
-            foreach(HitomiPanel hitomiPanel in MainPanel.Children)
+            foreach (HitomiPanel hitomiPanel in MainPanel.Children)
             {
                 HitomiPanel.ChangeColor(hitomiPanel);
             }
@@ -296,8 +296,8 @@ namespace HitomiViewer
                             long xlen = x.EnumerateFiles().Sum(f => f.Length);
                             long ylen = y.EnumerateFiles().Sum(f => f.Length);
                             if (xlen == ylen) return 0;
-                            if (xlen >  ylen) return 1;
-                            if (xlen <  ylen) return -1;
+                            if (xlen > ylen) return 1;
+                            if (xlen < ylen) return -1;
                             return 0;
                         });
                         return arr2.Select(f => f.FullName).ToArray();
@@ -486,48 +486,18 @@ namespace HitomiViewer
         private void MenuHiyobi_Click(object sender, RoutedEventArgs e)
         {
             MainPanel.Children.Clear();
-            InternetP parser = new InternetP();
-            int index = (int)new CountBox("페이지", "원하는 페이지 수", 1).ShowDialog();
-            parser.url = "https://api.hiyobi.me/list/" + index;
-            parser.LoadJObject(async (JObject jObject) =>
+            label.Visibility = Visibility.Visible;
+            label.FontSize = 100;
+            InternetP parser = new InternetP(url: "https://api.hiyobi.me/list/" + GetPage());
+            HiyobiLoader hiyobi = new HiyobiLoader();
+            hiyobi.start = (int count) => label.Content = "0/" + count;
+            hiyobi.update = (Hitomi h, int index, int max) =>
             {
-                foreach (JToken tk in jObject["list"])
-                {
-                    parser.url = $"https://cdn.hiyobi.me/data/json/{tk["id"]}_list.json";
-                    JArray imgs = await parser.TryLoadJArray();
-                    if (imgs == null) continue;
-                    Hitomi h = new Hitomi
-                    {
-                        id = tk["id"].ToString(),
-                        name = tk["title"].ToString(),
-                        dir = $"https://hiyobi.me/reader/{tk["id"]}",
-                        page = imgs.Count,
-                        thumb = LoadImage($"https://cdn.hiyobi.me/tn/{tk["id"]}.jpg"),
-                        type = Hitomi.Type.Hiyobi
-                    };
-                    Int64 size = 0;
-                    h.files = imgs.ToList().Select(x => $"https://cdn.hiyobi.me/data/{tk["id"]}/{x["name"]}").ToArray();
-                    h.FolderByte = size;
-                    h.SizePerPage = size / imgs.Count;
-                    foreach(JToken tags in tk["tags"])
-                    {
-                        HitomiPanel.HitomiInfo.Tag tag = new HitomiPanel.HitomiInfo.Tag();
-                        if (tags["value"].ToString().Contains(":"))
-                        {
-                            tag.types = (HitomiViewer.Tag.Types)Enum.Parse(typeof(HitomiViewer.Tag.Types), tags["value"].ToString().Split(':')[0]);
-                            tag.name = tags["display"].ToString();
-                        }
-                        else
-                        {
-                            tag.types = HitomiViewer.Tag.Types.tag;
-                            tag.name = tags["display"].ToString();
-                        }
-                        h.tags.Add(tag);
-                    }
-                    MainPanel.Children.Add(new HitomiPanel(h, this));
-                    Console.WriteLine($"Completed: https://cdn.hiyobi.me/tn/{tk["id"]}.jpg");
-                }
-            });
+                label.Content = $"{index}/{max}";
+                MainPanel.Children.Add(new HitomiPanel(h, this));
+            };
+            hiyobi.end = () => label.Visibility = Visibility.Collapsed;
+            parser.LoadJObject(hiyobi.Parser);
         }
         private void Hiyobi_Search_Text_KeyDown(object sender, KeyEventArgs e)
         {
@@ -538,75 +508,33 @@ namespace HitomiViewer
             MainPanel.Children.Clear();
             label.Visibility = Visibility.Visible;
             label.FontSize = 100;
-            InternetP parser = new InternetP();
-            parser.keyword = Hiyobi_Search_Text.Text.Split(' ').ToList();
-            parser.index = 1;
-            parser.HiyobiSearch(data => new InternetP(data: data).ParseJObject(async jobject =>
+            InternetP parser = new InternetP(keyword: Hitomi_Search_Text.Text.Split(' ').ToList(), index: 1);
+            HiyobiLoader hiyobi = new HiyobiLoader();
+            hiyobi.start = (int count) => label.Content = "0/" + count;
+            hiyobi.update = (Hitomi h, int index, int max) =>
             {
-                label.Content = 0 + "/" + jobject["list"].ToList().Count;
-                foreach (JToken tk in jobject["list"])
-                {
-                    label.Content = jobject["list"].ToList().IndexOf(tk) + "/" + jobject["list"].ToList().Count;
-                    parser = new InternetP();
-                    parser.url = $"https://cdn.hiyobi.me/data/json/{tk["id"]}_list.json";
-                    JArray imgs = await parser.TryLoadJArray();
-                    if (imgs == null) continue;
-                    Hitomi h = new Hitomi
-                    {
-                        id = tk["id"].ToString(),
-                        name = tk["title"].ToString(),
-                        dir = $"https://hiyobi.me/reader/{tk["id"]}",
-                        page = imgs.Count,
-                        thumb = LoadImage($"https://cdn.hiyobi.me/tn/{tk["id"]}.jpg"),
-                        type = Hitomi.Type.Hiyobi
-                    };
-                    Int64 size = 0;
-                    h.files = imgs.ToList().Select(x => $"https://cdn.hiyobi.me/data/{tk["id"]}/{x["name"]}").ToArray();
-                    h.FolderByte = size;
-                    h.SizePerPage = size / imgs.Count;
-                    foreach (JToken tags in tk["tags"])
-                    {
-                        HitomiPanel.HitomiInfo.Tag tag = new HitomiPanel.HitomiInfo.Tag();
-                        if (tags["value"].ToString().Contains(":"))
-                        {
-                            tag.types = (HitomiViewer.Tag.Types)Enum.Parse(typeof(HitomiViewer.Tag.Types), tags["value"].ToString().Split(':')[0]);
-                            tag.name = tags["display"].ToString();
-                        }
-                        else
-                        {
-                            tag.types = HitomiViewer.Tag.Types.tag;
-                            tag.name = tags["display"].ToString();
-                        }
-                        h.tags.Add(tag);
-                    }
-                    MainPanel.Children.Add(new HitomiPanel(h, this));
-                    Console.WriteLine($"Completed: https://cdn.hiyobi.me/tn/{tk["id"]}.jpg");
-                }
-            }));
+                label.Content = $"{index}/{max}";
+                MainPanel.Children.Add(new HitomiPanel(h, this));
+            };
+            hiyobi.end = () => label.Visibility = Visibility.Collapsed;
+            parser.HiyobiSearch(data => new InternetP(data: data).ParseJObject(hiyobi.Parser));
         }
-        private async void MenuHitomi_Click(object sender, RoutedEventArgs e)
+        private void MenuHitomi_Click(object sender, RoutedEventArgs e)
         {
             MainPanel.Children.Clear();
-            InternetP parser = new InternetP();
-            int index = (int)new CountBox("페이지", "원하는 페이지 수", 1).ShowDialog();
-            parser.index = (index - 1) * unchecked((int)this.Page_itemCount);
-            parser.count = unchecked((int)this.Page_itemCount);
-            parser.url = "https://ltn.hitomi.la/index-all.nozomi";
-            int[] ids = parser.ByteArrayToIntArray(await parser.LoadNozomi());
-            foreach (int id in ids)
+            label.Visibility = Visibility.Visible;
+            label.FontSize = 100;
+            HitomiLoader hitomi = new HitomiLoader();
+            hitomi.index = GetPage();
+            hitomi.count = (int)Page_itemCount;
+            hitomi.start = (int count) => label.Content = "0/" + count;
+            hitomi.update = (Hitomi h, int index, int max) =>
             {
-                parser.url = $"https://ltn.hitomi.la/galleryblock/{id}.html";
-                parser.index = id;
-                Hitomi h = await parser.HitomiData();
-                parser.url = $"https://ltn.hitomi.la/galleries/{id}.js";
-                JObject info = await parser.HitomiGalleryInfo();
-                h.type = Hitomi.Type.Hitomi;
-                h.tags = parser.HitomiTags(info);
-                h.files = parser.HitomiFiles(info).ToArray();
-                h.page = h.files.Length;
-                h.thumb = LoadImage("https:"+h.thumbpath);
+                label.Content = $"{index}/{max}";
                 MainPanel.Children.Add(new HitomiPanel(h, this));
-            }
+            };
+            hitomi.end = () => label.Visibility = Visibility.Collapsed;
+            hitomi.Parser();
         }
         private void Hitomi_Search_Text_KeyDown(object sender, KeyEventArgs e)
         {

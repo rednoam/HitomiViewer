@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -123,7 +124,10 @@ namespace HitomiViewer.Scripts
             HtmlNode name = doc.DocumentNode.SelectSingleNode("//h1[@class=\"lillie\"]");
             h.name = name.InnerText;
             HtmlNode image = doc.DocumentNode.SelectSingleNode("//div[@class=\"dj-img1\"]/img");
-            h.thumbpath = image.GetDataAttribute("src").Value;
+            image = image ?? doc.DocumentNode.SelectSingleNode("//div[@class=\"cg-img1\"]/img");
+            h.thumbpath = image.GetAttributeValue("src", "");
+            if (h.thumbpath == "")
+                h.thumbpath = image.GetDataAttribute("src").Value;
             HtmlNode table = doc.DocumentNode.SelectSingleNode("//table[@class=\"dj-desc\"]");
             for (var i = 0; i < table.ChildNodes.Count-1; i += 2)
             {

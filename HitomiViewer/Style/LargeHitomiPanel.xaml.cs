@@ -18,18 +18,19 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using static HitomiViewer.HitomiPanel;
 
 namespace HitomiViewer
 {
     /// <summary>
     /// HitomiPanel.xaml에 대한 상호 작용 논리
     /// </summary>
-    public partial class HitomiPanel : UserControl
+    public partial class LargeHitomiPanel : UserControl
     {
         private Hitomi h;
         private BitmapImage thumb;
         private MainWindow MainWindow;
-        public HitomiPanel(Hitomi h, MainWindow sender)
+        public LargeHitomiPanel(Hitomi h, MainWindow sender)
         {
             this.h = h;
             this.thumb = h.thumb;
@@ -220,7 +221,7 @@ namespace HitomiViewer
             return toolTip;
         }
 
-        public static void ChangeColor(HitomiPanel hpanel)
+        public static void ChangeColor(LargeHitomiPanel hpanel)
         {
             DockPanel panel = hpanel.panel as DockPanel;
 
@@ -250,7 +251,7 @@ namespace HitomiViewer
 
         private void Folder_Remove_Click(object sender, RoutedEventArgs e)
         {
-            MainWindow.RemoveChild(this, h.dir);
+            //MainWindow.RemoveChild(this, h.dir);
         }
         private void Folder_Open_Click(object sender, RoutedEventArgs e)
         {
@@ -345,70 +346,6 @@ namespace HitomiViewer
                 }
                 MainWindow.label.Visibility = Visibility.Hidden;
             }));
-        }
-
-        public class HitomiInfoOrg
-        {
-            public string Number { get; set; }
-            public string Title { get; set; }
-            public string Author { get; set; }
-            public string Group { get; set; }
-            public string Types { get; set; }
-            public string Series { get; set; }
-            public string Character { get; set; }
-            public string Tags { get; set; }
-            public string Language { get; set; }
-        }
-        public class HitomiInfo
-        {
-            public static HitomiInfo Parse(HitomiInfoOrg org)
-            {
-                HitomiInfo info = new HitomiInfo();
-
-                {
-                    List<Tag> tags = new List<Tag>();
-                    string[] arr = org.Tags.Split(new string[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
-                    foreach (var item in arr)
-                    {
-                        Tag tag = new Tag();
-                        if (item.Contains(":"))
-                        {
-                            tag.types = (HitomiViewer.Tag.Types)Enum.Parse(typeof(HitomiViewer.Tag.Types), item.Split(':')[0]);
-                            tag.name = string.Join(":", item.Split(':').Skip(1));
-                        }
-                        else
-                        {
-                            tag.types = HitomiViewer.Tag.Types.tag;
-                            tag.name = item;
-                        }
-
-                        tags.Add(tag);
-                    }
-                    info.Tags = tags.ToArray();
-                }
-                return info;
-            }
-            public int Number { get; set; }
-            public string Title { get; set; }
-            public string Author { get; set; }
-            public string Group { get; set; }
-            public Type Types { get; set; }
-            public string Series { get; set; }
-            public string Character { get; set; }
-            public Tag[] Tags { get; set; }
-            public string Language { get; set; }
-
-            public enum Type
-            {
-                doujinshi,
-                artistcg
-            }
-
-            public class Tag
-            {
-                public HitomiViewer.Tag.Types types { get; set; }
-                public string name { get; set; }
-            }
         }
     }
 }
