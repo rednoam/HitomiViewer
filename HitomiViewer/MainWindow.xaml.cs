@@ -41,6 +41,7 @@ namespace HitomiViewer
         public List<Reader> Readers = new List<Reader>();
         public MainWindow()
         {
+            new LoginWindow().ShowDialog();
             InitializeComponent();
             Init();
             InitEvents();
@@ -48,7 +49,7 @@ namespace HitomiViewer
 
         private void Init()
         {
-            CheckUpdate.Check();
+            CheckUpdate.Auto();
             this.MinWidth = 300;
             Global.MainWindow = this;
             string[] args = Environment.GetCommandLineArgs();

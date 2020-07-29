@@ -100,17 +100,24 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="LoginWindow.xaml.cs">
+      <DependentUpon>LoginWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="Scripts\AES128.cs" />
     <Compile Include="Scripts\BlurEffect.cs" />
     <Compile Include="Scripts\CheckUpdate.cs" />
     <Compile Include="Scripts\CountBox.cs" />
     <Compile Include="Scripts\Github.cs" />
     <Compile Include="Scripts\ImageProcessor.cs" />
     <Compile Include="Scripts\Loaders.cs" />
+    <Compile Include="Settings.xaml.cs">
+      <DependentUpon>Settings.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Style\LargeHitomiPanel.xaml.cs">
       <DependentUpon>LargeHitomiPanel.xaml</DependentUpon>
     </Compile>
@@ -133,6 +140,14 @@
     <Compile Include="Test\TestImageBox.xaml.cs">
       <DependentUpon>TestImageBox.xaml</DependentUpon>
     </Compile>
+    <Page Include="LoginWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Settings.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Style\LargeHitomiPanel.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

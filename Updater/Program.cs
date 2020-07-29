@@ -77,12 +77,14 @@ namespace Updater
                             Directory.Delete(entry.FullName, true);
                         if (File.Exists(entry.FullName))
                             File.Delete(entry.FullName);
+                        if (!Directory.Exists(Path.GetDirectoryName(Path.Combine(rootDir, entry.FullName))))
+                            Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(rootDir, entry.FullName)));
                         entry.ExtractToFile(entry.FullName);
                     }
                     catch (Exception ex) { Console.WriteLine(ex.Message); }
                 }
             }
-            //ZipFile.ExtractToDirectory(Path.Combine(rootDir, file), rootDir);
+            File.Delete(Path.Combine(rootDir, file));
             Process.Start(Path.Combine(rootDir, "HitomiViewer.exe"));
             Environment.Exit(0);
         }
@@ -123,6 +125,7 @@ namespace Updater
                     catch (Exception e) { Console.WriteLine(e.Message); }
                 }
             }
+            File.Delete(Path.Combine(rootDir, file));
             Process.Start(Path.Combine(rootDir, "HitomiViewer.exe"));
             Environment.Exit(0);
         }
