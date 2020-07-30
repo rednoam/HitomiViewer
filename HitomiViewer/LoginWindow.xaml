@@ -8,30 +8,10 @@
         Title="LoginWindow" Height="150" Width="200">
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="3*"></RowDefinition>
             <RowDefinition Height="2*"></RowDefinition>
-            <RowDefinition Height="1*"></RowDefinition>
         </Grid.RowDefinitions>
-        <Grid Grid.Row="0">
-            <Grid.RowDefinitions>
-                <RowDefinition></RowDefinition>
-                <RowDefinition></RowDefinition>
-            </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1*"></ColumnDefinition>
-                <ColumnDefinition Width="2*"></ColumnDefinition>
-            </Grid.ColumnDefinitions>
-            <Label Grid.Row="0" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center">아이디</Label>
-            <TextBox Grid.Row="0" Grid.Column="1" VerticalContentAlignment="Center"></TextBox>
-            <Label Grid.Row="1" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center">비밀번호</Label>
-            <PasswordBox Grid.Row="1" Grid.Column="1" VerticalContentAlignment="Center"></PasswordBox>
-        </Grid>
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition></ColumnDefinition>
-                <ColumnDefinition></ColumnDefinition>
-            </Grid.ColumnDefinitions>
-            <Button Grid.Column="0" Background="White">취소</Button>
-            <Button Grid.Column="1" Background="White">확인</Button>
-        </Grid>
+        <PasswordBox x:Name="Password" Grid.Row="0" VerticalContentAlignment="Center" KeyDown="Password_KeyDown"></PasswordBox>
+        <Button Grid.Row="1" Background="White" Click="Button_Click">확인</Button>
     </Grid>
 </Window>

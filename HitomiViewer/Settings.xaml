@@ -7,6 +7,9 @@
         mc:Ignorable="d"
         Title="Settings" Height="450" Width="800">
     <Grid>
-        
+        <StackPanel HorizontalAlignment="Left">
+            <CheckBox x:Name="Password">비밀번호 사용하기</CheckBox>
+            <Button Width="100" Click="Button_Click">저장</Button>
+        </StackPanel>
     </Grid>
 </Window>

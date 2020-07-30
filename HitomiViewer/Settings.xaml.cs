@@ -1,4 +1,6 @@
-﻿using System;
+﻿using HitomiViewer.Scripts;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -22,6 +24,18 @@ namespace HitomiViewer
         public Settings()
         {
             InitializeComponent();
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            Config cfg = new Config();
+            JObject config = cfg.Load();
+            if (Password.IsChecked.Value)
+            {
+                config["pw"] = SHA256.Hash(new InputBox("비밀번호를 입력해주세요.", "비밀번호 설정", "").ShowDialog());
+            }
+            cfg.Save(config);
+            Close();
         }
     }
 }

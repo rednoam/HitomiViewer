@@ -21,9 +21,8 @@
                         </LinearGradientBrush>
                     </Menu.Background>
                     <MenuItem Header="설정" x:Name="SettingMenu" Background="White">
-                        <MenuItem x:Name="LoadBtn" Header="불러오기" Click="LoadBtn_Click">
-                            
-                        </MenuItem>
+                        <MenuItem x:Name="OpenSetting" Header="설정창 열기" Click="OpenSetting_Click"></MenuItem>
+                        <MenuItem x:Name="LoadBtn" Header="불러오기" Click="LoadBtn_Click"></MenuItem>
                         <MenuItem x:Name="DarkMode" Header="_야간모드" IsCheckable="True" IsChecked="False" Checked="MenuItem_Checked" Unchecked="DarkMode_Unchecked"/>
                         <MenuItem x:Name="MenuPage" Header="페이지">
                             <MenuItem Header="쪽수"/>

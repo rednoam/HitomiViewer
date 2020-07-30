@@ -1,6 +1,7 @@
 ﻿using ExtensionMethods;
 using HitomiViewer.Scripts;
 using HitomiViewer.Scripts.Loaders;
+using HitomiViewer.Style;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -41,7 +42,7 @@ namespace HitomiViewer
         public List<Reader> Readers = new List<Reader>();
         public MainWindow()
         {
-            new LoginWindow().ShowDialog();
+            new LoginClass().Test();
             InitializeComponent();
             Init();
             InitEvents();
@@ -544,6 +545,10 @@ namespace HitomiViewer
         private void Hitomi_Search_Button_Click(object sender, RoutedEventArgs e)
         {
 
+        }
+        private void OpenSetting_Click(object sender, RoutedEventArgs e)
+        {
+            new Settings().Show();
         }
     }
 }

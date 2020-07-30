@@ -111,10 +111,13 @@
     <Compile Include="Scripts\AES128.cs" />
     <Compile Include="Scripts\BlurEffect.cs" />
     <Compile Include="Scripts\CheckUpdate.cs" />
+    <Compile Include="Scripts\Config.cs" />
     <Compile Include="Scripts\CountBox.cs" />
+    <Compile Include="Scripts\FileEncryptDecrypt.cs" />
     <Compile Include="Scripts\Github.cs" />
     <Compile Include="Scripts\ImageProcessor.cs" />
     <Compile Include="Scripts\Loaders.cs" />
+    <Compile Include="Scripts\SHA256.cs" />
     <Compile Include="Settings.xaml.cs">
       <DependentUpon>Settings.xaml</DependentUpon>
     </Compile>
@@ -133,6 +136,7 @@
       <DependentUpon>Reader.xaml</DependentUpon>
     </Compile>
     <Compile Include="Scripts\InternetP.cs" />
+    <Compile Include="Style\LoginClass.cs" />
     <Compile Include="Style\tag.xaml.cs">
       <DependentUpon>tag.xaml</DependentUpon>
     </Compile>
