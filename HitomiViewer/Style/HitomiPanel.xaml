@@ -9,11 +9,15 @@
     <DockPanel x:Name="panel" HorizontalAlignment="Stretch" Height="100" Margin="5" Background="White">
         <DockPanel.ContextMenu>
             <ContextMenu>
+                <MenuItem x:Name="Favorite" Header="즐겨찾기" Click="Favorite_Click" />
+                <MenuItem x:Name="FavoriteRemove" Header="즐겨찾기 삭제" Click="FavoriteRemove_Click" />
                 <MenuItem x:Name="Folder_Remove" Header="삭제" Click="Folder_Remove_Click" />
                 <MenuItem x:Name="Folder_Open" Header="열기" Click="Folder_Open_Click" />
                 <MenuItem x:Name="Folder_Hiyobi_Search" Header="검색" Click="Folder_Hiyobi_Search_Click" />
                 <MenuItem x:Name="Hiyobi_Download" Header="다운로드" Click="Hiyobi_Download_Click" />
                 <MenuItem x:Name="Hitomi_Download" Header="다운로드" Click="Hitomi_Download_Click" />
+                <MenuItem x:Name="Encrypt" Header="암호화" Click="Encrypt_Click" />
+                <MenuItem x:Name="Decrypt" Header="복호화" Click="Decrypt_Click" />
             </ContextMenu>
         </DockPanel.ContextMenu>
         <Border x:Name="border" Background="LightGray" DockPanel.Dock="Left">

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using HitomiViewer.Scripts;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,5 +22,10 @@ namespace HitomiViewer
         public static Color fontscolor = Colors.Black;
         public static Color outlineclr = Colors.Black;
         public const int Magnif = 4;
+        public static Config cfg = new Config();
+        public static JObject cfgob = cfg.Load();
+        public static string Password = cfgob["pw"].ToString();
+        public static bool FileEn = cfg.BoolValue("fe") ?? false;
+        public static bool AutoFileEn = cfg.BoolValue("autofe") ?? false;
     }
 }

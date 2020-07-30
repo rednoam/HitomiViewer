@@ -69,6 +69,9 @@
   <PropertyGroup>
     <SignManifests>true</SignManifests>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>favicon.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="HtmlAgilityPack, Version=1.11.24.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
       <HintPath>..\packages\HtmlAgilityPack.1.11.24\lib\Net45\HtmlAgilityPack.dll</HintPath>
@@ -108,7 +111,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Scripts\AES128.cs" />
+    <Compile Include="Encryption\AES128.cs" />
     <Compile Include="Scripts\BlurEffect.cs" />
     <Compile Include="Scripts\CheckUpdate.cs" />
     <Compile Include="Scripts\Config.cs" />
@@ -117,12 +120,9 @@
     <Compile Include="Scripts\Github.cs" />
     <Compile Include="Scripts\ImageProcessor.cs" />
     <Compile Include="Scripts\Loaders.cs" />
-    <Compile Include="Scripts\SHA256.cs" />
+    <Compile Include="Encryption\SHA256.cs" />
     <Compile Include="Settings.xaml.cs">
       <DependentUpon>Settings.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Style\LargeHitomiPanel.xaml.cs">
-      <DependentUpon>LargeHitomiPanel.xaml</DependentUpon>
     </Compile>
     <Compile Include="Style\HitomiPanel.xaml.cs">
       <DependentUpon>HitomiPanel.xaml</DependentUpon>
@@ -130,7 +130,6 @@
     <Compile Include="Scripts\ExtensionMethods.cs" />
     <Compile Include="Scripts\Global.cs" />
     <Compile Include="Scripts\Hitomi.cs" />
-    <Compile Include="Scripts\IconHelper.cs" />
     <Compile Include="Scripts\InputBox.cs" />
     <Compile Include="Reader.xaml.cs">
       <DependentUpon>Reader.xaml</DependentUpon>
@@ -151,10 +150,6 @@
     <Page Include="Settings.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Style\LargeHitomiPanel.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
     </Page>
     <Page Include="Style\HitomiPanel.xaml">
       <SubType>Designer</SubType>
@@ -262,6 +257,19 @@
       <Project>{38700B2B-939E-439F-A975-E6FA91703BDB}</Project>
       <Name>WebPTest</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\ErrEncrypted.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\NoImage.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="favicon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

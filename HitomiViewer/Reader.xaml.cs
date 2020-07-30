@@ -1,4 +1,5 @@
 ﻿using ExtensionMethods;
+using HitomiViewer.Scripts;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -178,7 +179,17 @@ namespace HitomiViewer
             Uri uriResult;
             bool result = Uri.TryCreate(link, UriKind.Absolute, out uriResult)
                 && ((uriResult.Scheme == Uri.UriSchemeHttp) || (uriResult.Scheme == Uri.UriSchemeHttps));
-            image.Source = new BitmapImage(new Uri("/Resources/loading2.png", UriKind.Relative)); 
+            image.Source = new BitmapImage(new Uri("/Resources/loading2.png", UriKind.Relative));
+            int copypage = page;
+            if (hitomi.images == null)
+                hitomi.images = new BitmapImage[hitomi.page];
+            if (hitomi.images[copypage] == null)
+            {
+                hitomi.images[copypage] = await ImageProcessor.ProcessEncryptAsync(link);
+            }
+            if (copypage == page)
+                image.Source = hitomi.images[page];
+            /*
             if (result)
             {
                 int copypage = page;
@@ -196,6 +207,7 @@ namespace HitomiViewer
             }
             if (!result)
                 image.Source = ImageSourceLoad(link);
+            */
 
             //Bitmap test = new Bitmap(link);
             //image.Source = ImageSourceFromBitmap(test);

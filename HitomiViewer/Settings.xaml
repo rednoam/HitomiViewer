@@ -8,7 +8,15 @@
         Title="Settings" Height="450" Width="800">
     <Grid>
         <StackPanel HorizontalAlignment="Left">
-            <CheckBox x:Name="Password">비밀번호 사용하기</CheckBox>
+            <CheckBox x:Name="Password" Checked="Password_Checked" Unchecked="Password_Unchecked">비밀번호 사용하기
+                <CheckBox.ToolTip>로그인시에 비밀번호를 추가합니다.</CheckBox.ToolTip>
+            </CheckBox>
+            <CheckBox x:Name="FileEncrypt" Checked="FileEncrypt_Checked" Unchecked="FileEncrypt_Unchecked">파일 암호화 사용하기
+                <CheckBox.ToolTip>(비밀번호 필요)암호화가 되어있는 파일도 보여줍니다.</CheckBox.ToolTip>
+            </CheckBox>
+            <CheckBox x:Name="AutoEncryption">자동 암호화
+                <CheckBox.ToolTip>(파일 암호화 필요)다운로드시 자동으로 파일을 암호화 시킵니다.</CheckBox.ToolTip>
+            </CheckBox>
             <Button Width="100" Click="Button_Click">저장</Button>
         </StackPanel>
     </Grid>

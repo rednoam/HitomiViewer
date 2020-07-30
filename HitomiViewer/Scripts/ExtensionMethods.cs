@@ -140,5 +140,13 @@ namespace ExtensionMethods
             Uri oUri = new Uri("pack://application:,,,/" + psAssemblyName + ";component/" + psResourceName, UriKind.RelativeOrAbsolute);
             return BitmapFrame.Create(oUri);
         }
+
+        public static bool isUrl(this string s)
+        {
+            Uri uriResult;
+            bool result = Uri.TryCreate(s, UriKind.Absolute, out uriResult)
+                && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+            return result;
+        }
     }
 }

@@ -1,4 +1,6 @@
-﻿using HitomiViewer.Scripts;
+﻿using ExtensionMethods;
+using HitomiViewer.Encryption;
+using HitomiViewer.Scripts;
 using HitomiViewer.Style;
 using Newtonsoft.Json.Linq;
 using System;
@@ -8,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -18,6 +21,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Path = System.IO.Path;
 
 namespace HitomiViewer
 {
@@ -29,6 +33,7 @@ namespace HitomiViewer
         private Hitomi h;
         private BitmapImage thumb;
         private MainWindow MainWindow;
+        private Hitomi.Type ftype = Hitomi.Type.Folder;
         public HitomiPanel(Hitomi h, MainWindow sender)
         {
             this.h = h;
@@ -46,6 +51,10 @@ namespace HitomiViewer
 
         private void Init()
         {
+            if (h.thumb == null)
+            {
+                h.thumb = new BitmapImage(new Uri("/Resources/NoImage.jpg", UriKind.Relative));
+            }
             thumbNail.Source = h.thumb;
             thumbBrush.ImageSource = h.thumb;
             thumbNail.ToolTip = GetToolTip(panel.Height);
@@ -83,7 +92,6 @@ namespace HitomiViewer
                 sizeperpageLabel.Content = Math.Round(SizePerPage / GB, 2) + "GB";
 
             ChangeColor(this);
-            Hitomi.Type ftype = Hitomi.Type.Folder;
             Uri uriResult;
             bool result = Uri.TryCreate(h.dir, UriKind.Absolute, out uriResult)
                 && ((uriResult.Scheme == Uri.UriSchemeHttp) || (uriResult.Scheme == Uri.UriSchemeHttps));
@@ -164,15 +172,25 @@ namespace HitomiViewer
                 }
             }
 
-            //Folder_Open.Visibility = Visibility.Collapsed;
+            ContextSetup();
+        }
+
+        private void ContextSetup()
+        {
+            Favorite.Visibility = Visibility.Visible;
+            FavoriteRemove.Visibility = Visibility.Collapsed;
             Folder_Remove.Visibility = Visibility.Collapsed;
             Folder_Hiyobi_Search.Visibility = Visibility.Collapsed;
             Hiyobi_Download.Visibility = Visibility.Collapsed;
             Hitomi_Download.Visibility = Visibility.Collapsed;
+            Encrypt.Visibility = Visibility.Collapsed;
+            Decrypt.Visibility = Visibility.Collapsed;
             switch (h.type)
             {
                 case Hitomi.Type.Folder:
                     Folder_Remove.Visibility = Visibility.Visible;
+                    Encrypt.Visibility = Visibility.Visible;
+                    Decrypt.Visibility = Visibility.Visible;
                     break;
                 case Hitomi.Type.Hiyobi:
                     Hiyobi_Download.Visibility = Visibility.Visible;
@@ -186,6 +204,14 @@ namespace HitomiViewer
                 case Hitomi.Type.Hiyobi:
                     Folder_Hiyobi_Search.Visibility = Visibility.Visible;
                     break;
+            }
+            Config cfg = new Config();
+            JObject obj = cfg.Load();
+            List<string> favs = cfg.ArrayValue<string>("fav").ToList();
+            if (favs.Contains(h.dir))
+            {
+                Favorite.Visibility = Visibility.Collapsed;
+                FavoriteRemove.Visibility = Visibility.Visible;
             }
         }
 
@@ -260,7 +286,7 @@ namespace HitomiViewer
         {
             Task.Factory.StartNew(() =>
             {
-                string filename = h.name.Replace("|", "｜");
+                string filename = h.name.Replace("|", "｜").Replace("?", "？");
                 Directory.CreateDirectory($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}");
                 JObject jobject = JObject.FromObject(h);
                 File.WriteAllText($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/info.json", jobject.ToString());
@@ -269,9 +295,20 @@ namespace HitomiViewer
                     string file = h.files[i];
                     WebClient wc = new WebClient();
                     if (!File.Exists($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg"))
-                        wc.DownloadFileAsync(new Uri(file), $"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg");
+                    {
+                        if (Global.AutoFileEn)
+                        {
+                            wc.DownloadDataAsync(new Uri(file), $"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg.lock");
+                            wc.DownloadDataCompleted += (object sender2, DownloadDataCompletedEventArgs e2) =>
+                            {
+                                File.WriteAllBytes(e2.UserState.ToString(),
+                                    AES128.Encrypt(e2.Result, Global.Password)); ;
+                            };
+                        }
+                        else wc.DownloadFileAsync(new Uri(file), $"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg");
+                    }
                 }
-                System.Diagnostics.Process.Start($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}");
+                Process.Start($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}");
             });
         }
         private void Hitomi_Download_Click(object sender, RoutedEventArgs e)
@@ -288,9 +325,20 @@ namespace HitomiViewer
                     WebClient wc = new WebClient();
                     wc.Headers.Add("referer", "https://hitomi.la/");
                     if (!File.Exists($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg"))
-                        wc.DownloadFileAsync(new Uri(file), $"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg");
+                    {
+                        if (Global.AutoFileEn)
+                        {
+                            wc.DownloadDataAsync(new Uri(file), $"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg.lock");
+                            wc.DownloadDataCompleted += (object sender2, DownloadDataCompletedEventArgs e2) =>
+                            {
+                                File.WriteAllBytes(e2.UserState.ToString(),
+                                    AES128.Encrypt(e2.Result, Global.Password)); ;
+                            };
+                        }
+                        else wc.DownloadFileAsync(new Uri(file), $"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg");
+                    }
                 }
-                System.Diagnostics.Process.Start($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}");
+                Process.Start($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}");
             });
         }
         private void Folder_Hiyobi_Search_Click(object sender, RoutedEventArgs e)
@@ -345,6 +393,61 @@ namespace HitomiViewer
                 }
                 MainWindow.label.Visibility = Visibility.Hidden;
             }));
+        }
+        private void Encrypt_Click(object sender, RoutedEventArgs e)
+        {
+            string[] files = Directory.GetFiles(h.dir);
+            foreach (string file in files)
+            {
+                if (Path.GetFileName(file) == "info.json") continue;
+                if (Path.GetFileName(file) == "info.txt") continue;
+                if (Path.GetExtension(file) == ".lock") continue;
+                byte[] org = File.ReadAllBytes(file);
+                byte[] enc = AES128.Encrypt(org, Global.Password);
+                File.Delete(file);
+                File.WriteAllBytes(file + ".lock", enc);
+            }
+            Process.Start(h.dir);
+        }
+        private void Decrypt_Click(object sender, RoutedEventArgs e)
+        {
+            string[] files = Directory.GetFiles(h.dir);
+            foreach (string file in files)
+            {
+                try
+                {
+                    byte[] org = File.ReadAllBytes(file);
+                    byte[] enc = AES128.Decrypt(org, Global.Password);
+                    File.Delete(file);
+                    File.WriteAllBytes(Path.Combine(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file)), enc);
+                }
+                catch { }
+            }
+            Process.Start(h.dir);
+        }
+        private void Favorite_Click(object sender, RoutedEventArgs e)
+        {
+            Config cfg = new Config();
+            JObject obj = cfg.Load();
+            List<string> favs = cfg.ArrayValue<string>("fav").ToList();
+            if (!favs.Contains(h.dir))
+                favs.Add(h.dir);
+            favs = favs.Where(x => Directory.Exists(x) || x.isUrl()).Distinct().ToList();
+            obj["fav"] = JToken.FromObject(favs);
+            cfg.Save(obj);
+            ContextSetup();
+        }
+        private void FavoriteRemove_Click(object sender, RoutedEventArgs e)
+        {
+            Config cfg = new Config();
+            JObject obj = cfg.Load();
+            List<string> favs = cfg.ArrayValue<string>("fav").ToList();
+            if (favs.Contains(h.dir))
+                favs.Remove(h.dir);
+            favs = favs.Where(x => Directory.Exists(x) || x.isUrl()).Distinct().ToList();
+            obj["fav"] = JToken.FromObject(favs);
+            cfg.Save(obj);
+            ContextSetup();
         }
 
         public class HitomiInfoOrg

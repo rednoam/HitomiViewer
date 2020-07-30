@@ -1,4 +1,5 @@
 ﻿using ExtensionMethods;
+using HitomiViewer.Encryption;
 using HitomiViewer.Scripts;
 using HitomiViewer.Scripts.Loaders;
 using HitomiViewer.Style;
@@ -113,7 +114,10 @@ namespace HitomiViewer
             Page_ItemCount.SelectedIndex = 3;
             SearchMode2.SelectedIndex = 0;
             DelayRegistEvents();
-            new TaskFactory().StartNew(() => LoadHitomi(path));
+            if (Global.FileEn)
+                new TaskFactory().StartNew(() => LoadHitomi(path));
+            else
+                new TaskFactory().StartNew(() => LoadHitomi(path));
         }
 
         public void LoadHitomi(string path)
@@ -121,27 +125,23 @@ namespace HitomiViewer
             string[] @NotSorted = Directory.GetDirectories(path);
             LoadHitomi(NotSorted);
         }
-
         public void LoadHitomi(string[] files)
         {
-            Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate { label.Visibility = Visibility.Visible; }));
+            Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => label.Visibility = Visibility.Hidden));
             if (files.Length <= 0)
             {
-                Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate { label.Visibility = Visibility.Hidden; }));
+                Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => label.Visibility = Visibility.Hidden));
                 return;
             }
             string[] Folders = FolderSort(files);
-            Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate
+            int i = 0;
+            int SelectedPage = 1;
+            Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
             {
                 this.Background = new SolidColorBrush(Global.background);
                 MainPanel.Children.Clear();
                 if (SearchMode2.SelectedIndex == 1)
                     Folders = Folders.Reverse().ToArray();
-            }));
-            int i = 0;
-            int SelectedPage = 1;
-            Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
-            {
                 SelectedPage = Page_Index.SelectedIndex + 1;
                 this.Title = string.Format("MainWindow - {0}페이지", SelectedPage);
             }));
@@ -149,34 +149,30 @@ namespace HitomiViewer
             {
                 i++;
                 Console.WriteLine("{0}: {1}", i, folder);
-                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
-                string[] @NotSorted = Directory.GetFiles(folder).Where(file => allowedExtensions.Any(file.ToLower().EndsWith)).ToArray().ESort().ToArray();
-                if (NotSorted.Length <= 0) continue;
-                Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".lock" };
+                string[] innerFiles = Directory.GetFiles(folder).Where(file => allowedExtensions.Any(file.ToLower().EndsWith)).ToArray().ESort();
+                if (innerFiles.Length <= 0) continue;
+                Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                 {
-                    label.FontSize = 100;
-                    label.Content = i + "/" + Page_itemCount;
-                    string[] innerFiles = NotSorted.ESort().ToArray();
                     Hitomi h = new Hitomi
                     {
                         name = folder.Split(Path.DirectorySeparatorChar).Last(),
                         dir = folder,
                         page = innerFiles.Length,
-                        thumb = new BitmapImage(new Uri(innerFiles.First())),
-                        type = Hitomi.Type.Folder
+                        files = innerFiles,
+                        thumb = ImageProcessor.ProcessEncrypt(innerFiles.First()),
+                        type = Hitomi.Type.Folder,
+                        FolderByte = GetFolderByte(folder),
+                        SizePerPage = GetSizePerPage(folder)
                     };
-                    h.FolderByte = GetFolderByte(folder);
-                    h.SizePerPage = GetSizePerPage(folder);
+                    if (h.thumb == null) return;
+                    label.FontSize = 100;
+                    label.Content = i + "/" + Page_itemCount;
                     MainPanel.Children.Add(new HitomiPanel(h, this));
-                    h.thumb = null;
                     Console.WriteLine("Completed: {0}", innerFiles.First());
                 }));
             }
-            Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate
-            {
-                label.Visibility = Visibility.Hidden;
-            }));
-            GC.Collect();
+            Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => label.Visibility = Visibility.Hidden));
         }
 
         public void RemoveChild(HitomiPanel panel, string dir)
@@ -549,6 +545,63 @@ namespace HitomiViewer
         private void OpenSetting_Click(object sender, RoutedEventArgs e)
         {
             new Settings().Show();
+        }
+        private async void FavoriteBtn_Click(object sender, RoutedEventArgs e)
+        {
+            MainPanel.Children.Clear();
+            label.Visibility = Visibility.Visible;
+            label.FontSize = 100;
+            Config cfg = new Config();
+            cfg.Load();
+            List<string> favs = cfg.ArrayValue<string>("fav").ToList();
+            favs = favs.Where(x => Directory.Exists(x) || x.isUrl()).Distinct().ToList();
+            InternetP parser = new InternetP();
+            parser.start = (int count) => label.Content = "0/" + count;
+            parser.update = (Hitomi h, int index, int max) =>
+            {
+                label.Content = $"{index}/{max}";
+                MainPanel.Children.Add(new HitomiPanel(h, this));
+            };
+            parser.end = () => label.Visibility = Visibility.Collapsed;
+            await parser.LoadCompre(favs);
+            label.Visibility = Visibility.Collapsed;
+        }
+        private void Encrypt_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (string item in Directory.GetDirectories(path))
+            {
+                string[] files = Directory.GetFiles(item);
+                foreach (string file in files)
+                {
+                    if (Path.GetFileName(file) == "info.json") continue;
+                    if (Path.GetFileName(file) == "info.txt") continue;
+                    if (Path.GetExtension(file) == ".lock") continue;
+                    byte[] org = File.ReadAllBytes(file);
+                    byte[] enc = AES128.Encrypt(org, Global.Password);
+                    File.Delete(file);
+                    File.WriteAllBytes(file + ".lock", enc);
+                }
+            }
+            MessageBox.Show("전체 암호화 완료");
+        }
+        private void Decrypt_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (string item in Directory.GetDirectories(path))
+            {
+                string[] files = Directory.GetFiles(item);
+                foreach (string file in files)
+                {
+                    try
+                    {
+                        byte[] org = File.ReadAllBytes(file);
+                        byte[] enc = AES128.Decrypt(org, Global.Password);
+                        File.Delete(file);
+                        File.WriteAllBytes(Path.Combine(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file)), enc);
+                    }
+                    catch { }
+                }
+            }
+            MessageBox.Show("전체 복호화 완료");
         }
     }
 }

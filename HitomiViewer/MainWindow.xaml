@@ -22,7 +22,6 @@
                     </Menu.Background>
                     <MenuItem Header="설정" x:Name="SettingMenu" Background="White">
                         <MenuItem x:Name="OpenSetting" Header="설정창 열기" Click="OpenSetting_Click"></MenuItem>
-                        <MenuItem x:Name="LoadBtn" Header="불러오기" Click="LoadBtn_Click"></MenuItem>
                         <MenuItem x:Name="DarkMode" Header="_야간모드" IsCheckable="True" IsChecked="False" Checked="MenuItem_Checked" Unchecked="DarkMode_Unchecked"/>
                         <MenuItem x:Name="MenuPage" Header="페이지">
                             <MenuItem Header="쪽수"/>
@@ -54,6 +53,12 @@
                                 <ComboBoxItem Content="뒤집기"/>
                             </ComboBox>
                         </MenuItem>
+                    </MenuItem>
+                    <MenuItem Header="파일" x:Name="_File" Background="White">
+                        <MenuItem x:Name="LoadBtn" Header="불러오기" Click="LoadBtn_Click" />
+                        <MenuItem x:Name="FavoriteBtn" Header="즐겨찾기" Click="FavoriteBtn_Click" />
+                        <MenuItem x:Name="Encrypt" Header="전체 암호화" Click="Encrypt_Click" />
+                        <MenuItem x:Name="Decrypt" Header="전체 복호화" Click="Decrypt_Click" />
                     </MenuItem>
                     <MenuItem Header="인터넷" x:Name="InternetMenu" Background="White">
                         <MenuItem x:Name="MenuHiyobi" Header="Hiyobi.me">

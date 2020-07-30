@@ -1,7 +1,10 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using ExtensionMethods;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 using Hitomi = HitomiViewer.Hitomi;
 
@@ -60,6 +63,37 @@ namespace HitomiViewer.Scripts.Loaders
                     jobject["list"].Count());
             }
             end();
+        }
+        public async Task<Hitomi> Parser()
+        {
+            InternetP parser;
+            parser = new InternetP(url: $"https://api.hiyobi.me/gallery/{text}");
+            JObject obj = await parser.LoadJObject();
+            parser = new InternetP(url: $"https://cdn.hiyobi.me/data/json/{text}_list.json");
+            JArray imgs = await parser.TryLoadJArray();
+            if (imgs == null) return null;
+            Hitomi h = new Hitomi
+            {
+                id = obj["id"].ToString(),
+                name = obj["title"].ToString(),
+                type = type,
+                page = imgs.Count,
+                dir = $"https://hiyobi.me/reader/{text}",
+                thumb = ImageProcessor.LoadWebImage($"https://cdn.hiyobi.me/tn/{text}.jpg"),
+                thumbpath = $"https://cdn.hiyobi.me/tn/{text}.jpg",
+                files = imgs.ToList().Select(x => $"https://cdn.hiyobi.me/data/{text}/{x["name"]}").ToArray()
+            };
+            foreach (JToken tags in obj["tags"])
+            {
+                HitomiPanel.HitomiInfo.Tag tag = new HitomiPanel.HitomiInfo.Tag();
+                if (tags["value"].ToString().Contains(":"))
+                    tag.types = (HitomiViewer.Tag.Types)Enum.Parse(typeof(HitomiViewer.Tag.Types), tags["value"].ToString().Split(':')[0]);
+                else
+                    tag.types = HitomiViewer.Tag.Types.tag;
+                tag.name = tags["display"].ToString();
+                h.tags.Add(tag);
+            }
+            return h;
         }
         public void Search()
         {

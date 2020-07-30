@@ -1,4 +1,5 @@
-﻿using HitomiViewer.Scripts;
+﻿using HitomiViewer.Encryption;
+using HitomiViewer.Scripts;
 using System;
 using System.Collections.Generic;
 using System.Linq;

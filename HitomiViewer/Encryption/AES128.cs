@@ -5,7 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HitomiViewer.Scripts
+namespace HitomiViewer.Encryption
 {
     class AES128
     {

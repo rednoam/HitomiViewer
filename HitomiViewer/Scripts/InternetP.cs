@@ -1,8 +1,11 @@
-﻿using HtmlAgilityPack;
+﻿using ExtensionMethods;
+using HitomiViewer.Scripts.Loaders;
+using HtmlAgilityPack;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -18,6 +21,9 @@ namespace HitomiViewer.Scripts
         public List<string> keyword { get; set; }
         public int index { get; set; }
         public int count { get; set; }
+        public Action<Hitomi, int, int> update = null;
+        public Action<int> start = null;
+        public Action end = null;
 
         public InternetP(string url = null, string data = null, List<string> keyword = null, int? index = null)
         {
@@ -193,6 +199,61 @@ namespace HitomiViewer.Scripts
             var pageContents = await response.Content.ReadAsByteArrayAsync();
             return pageContents;
         }
+        public async Task<List<Hitomi>> LoadCompre(List<string> items)
+        {
+            List<Hitomi> res = new List<Hitomi>();
+            start(items.Count);
+            foreach (string item in items)
+            {
+                if (item.isUrl())
+                {
+                    Uri uri = new Uri(item);
+                    if (uri.Host == "hiyobi.me")
+                    {
+                        string id = Path.GetFileNameWithoutExtension(uri.AbsolutePath);
+                        Hitomi h = await new HiyobiLoader(text: id).Parser();
+                        res.Add(h);
+                        update(h, items.IndexOf(item), items.Count);
+                    }
+                    if (uri.Host == "hitomi.la")
+                    {
+                        string id = Path.GetFileNameWithoutExtension(uri.AbsolutePath);
+                        this.url = $"https://ltn.hitomi.la/galleryblock/{id}.html";
+                        this.index = int.Parse(id);
+                        Hitomi h = await HitomiData();
+                        this.url = $"https://ltn.hitomi.la/galleries/{id}.js";
+                        JObject info = await HitomiGalleryInfo();
+                        h.type = Hitomi.Type.Hitomi;
+                        h.tags = HitomiTags(info);
+                        h.files = HitomiFiles(info).ToArray();
+                        h.page = h.files.Length;
+                        h.thumb = ImageProcessor.LoadWebImage("https:" + h.thumbpath);
+                        update(h, items.IndexOf(item), items.Count);
+                    }
+                }
+                else
+                {
+                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".lock" };
+                    string[] innerFiles = Directory.GetFiles(item).Where(file => allowedExtensions.Any(file.ToLower().EndsWith)).ToArray().ESort();
+                    if (innerFiles.Length <= 0) continue;
+                    Hitomi h = new Hitomi
+                    {
+                        name = item.Split(Path.DirectorySeparatorChar).Last(),
+                        dir = item,
+                        page = innerFiles.Length,
+                        files = innerFiles,
+                        thumb = ImageProcessor.ProcessEncrypt(innerFiles.First()),
+                        type = Hitomi.Type.Folder,
+                        FolderByte = Global.MainWindow.GetFolderByte(item),
+                        SizePerPage = Global.MainWindow.GetSizePerPage(item)
+                    };
+                    update(h, items.IndexOf(item), items.Count);
+                }
+            }
+            end();
+            return res;
+        }
+
         public async Task<string> Load(string Url)
         {
             if (Url.Last() == '/') Url = Url.Remove(Url.Length - 1);
