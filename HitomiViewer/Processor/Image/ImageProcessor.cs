@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using WebPWrapper;
 
@@ -43,7 +44,20 @@ namespace HitomiViewer.Scripts
                         return image;
                     }
                 }
-                catch { return LoadMemory(url); }
+                catch {
+                    try
+                    {
+                        return LoadMemory(url);
+                    }
+                    catch (FileNotFoundException)
+                    {
+                        return FromResource("NoImage.jpg");
+                    }
+                    catch (NotSupportedException)
+                    {
+                        return FromResource("ErrEncrypted.jpg");
+                    }
+                }
             }
             else
             {
@@ -51,10 +65,13 @@ namespace HitomiViewer.Scripts
                 {
                     return LoadMemory(url);
                 }
-                catch
+                catch (FileNotFoundException)
                 {
-                    return null;
-                    //return new BitmapImage(new Uri("/Resources/ErrEncrypted.jpg", UriKind.Relative));
+                    return FromResource("NoImage.jpg");
+                }
+                catch (NotSupportedException)
+                {
+                    return FromResource("ErrEncrypted.jpg");
                 }
             }
         }
@@ -83,7 +100,21 @@ namespace HitomiViewer.Scripts
                         return image;
                     }
                 }
-                catch { return LoadMemory(url); }
+                catch (Exception ex)
+                {
+                    try
+                    {
+                        return LoadMemory(url);
+                    }
+                    catch (FileNotFoundException)
+                    {
+                        return FromResource("NoImage.jpg");
+                    }
+                    catch (NotSupportedException)
+                    {
+                        return FromResource("ErrEncrypted.jpg");
+                    }
+                }
             }
             else
             {
@@ -91,26 +122,33 @@ namespace HitomiViewer.Scripts
                 {
                     return LoadMemory(url);
                 }
-                catch
+                catch (FileNotFoundException)
                 {
-                    return null;
-                    //return new BitmapImage(new Uri("/Resources/ErrEncrypted.jpg", UriKind.Relative));
+                    return FromResource("NoImage.jpg");
+                }
+                catch (NotSupportedException)
+                {
+                    return FromResource("ErrEncrypted.jpg");
                 }
             }
         }
         public static BitmapImage LoadMemory(string url)
         {
-            var bitmap = new BitmapImage();
-            var stream = File.OpenRead(url);
+            try
+            {
+                var bitmap = new BitmapImage();
+                var stream = File.OpenRead(url);
 
-            bitmap.BeginInit();
-            bitmap.CacheOption = BitmapCacheOption.OnLoad;
-            bitmap.StreamSource = stream;
-            bitmap.EndInit();
-            stream.Close();
-            stream.Dispose();
-            bitmap.Freeze();
-            return bitmap;
+                bitmap.BeginInit();
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.StreamSource = stream;
+                bitmap.EndInit();
+                stream.Close();
+                stream.Dispose();
+                bitmap.Freeze();
+                return bitmap;
+            }
+            catch { return null; }
         }
         public static BitmapImage LoadWebImage(string url)
         {
@@ -203,6 +241,16 @@ namespace HitomiViewer.Scripts
             {
                 return null;
             }
+        }
+        public static BitmapImage FromResource(string psResourceName)
+        {
+            Uri oUri = new Uri($"pack://siteoforigin:,,,/Resources/{psResourceName}");
+            return new BitmapImage(oUri);
+        }
+        public static BitmapImage FromResourceWithName(string psAssemblyName, string psResourceName)
+        {
+            Uri oUri = new Uri("pack://application:,,,/" + psAssemblyName + ";component/" + psResourceName, UriKind.RelativeOrAbsolute);
+            return new BitmapImage(oUri);
         }
     }
 }

@@ -216,12 +216,6 @@ namespace HitomiViewer
         private void PreLoad()
         {
             return;
-            Console.WriteLine(page + "/" + ((page-1) % 10 == 0).ToString()+"/"+((page - 1) % 10).ToString());
-            for (int i = page; (page-1) % 10 == 0 && i < page+10 && i < hitomi.page; i++)
-            {
-                Console.WriteLine(i.ToString());
-                new BitmapImage(new Uri(this.hitomi.files[i]));
-            }
         }
 
         private void Image_MouseDown(object sender, MouseEventArgs e)
@@ -367,7 +361,7 @@ namespace HitomiViewer
                 bi.EndInit();
                 return bi;
             }
-            catch (Exception ex)
+            catch
             {
                 return null;
             }

@@ -112,36 +112,37 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="Encryption\AES128.cs" />
-    <Compile Include="Scripts\BlurEffect.cs" />
-    <Compile Include="Scripts\CheckUpdate.cs" />
+    <Compile Include="Processor\Image\BlurEffect.cs" />
+    <Compile Include="Processor\Internet\CheckUpdate.cs" />
     <Compile Include="Scripts\Config.cs" />
-    <Compile Include="Scripts\CountBox.cs" />
+    <Compile Include="Scripts\File.cs" />
+    <Compile Include="UserControls\CountBox.cs" />
     <Compile Include="Scripts\FileEncryptDecrypt.cs" />
-    <Compile Include="Scripts\Github.cs" />
-    <Compile Include="Scripts\ImageProcessor.cs" />
-    <Compile Include="Scripts\Loaders.cs" />
+    <Compile Include="Processor\Internet\Github.cs" />
+    <Compile Include="Processor\Image\ImageProcessor.cs" />
+    <Compile Include="Processor\Internet\Loaders.cs" />
     <Compile Include="Encryption\SHA256.cs" />
     <Compile Include="Settings.xaml.cs">
       <DependentUpon>Settings.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Style\HitomiPanel.xaml.cs">
+    <Compile Include="UserControls\LargeHitomiPanel.xaml.cs">
+      <DependentUpon>LargeHitomiPanel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UserControls\HitomiPanel.xaml.cs">
       <DependentUpon>HitomiPanel.xaml</DependentUpon>
     </Compile>
     <Compile Include="Scripts\ExtensionMethods.cs" />
     <Compile Include="Scripts\Global.cs" />
-    <Compile Include="Scripts\Hitomi.cs" />
-    <Compile Include="Scripts\InputBox.cs" />
+    <Compile Include="Structs\Hitomi.cs" />
+    <Compile Include="UserControls\InputBox.cs" />
     <Compile Include="Reader.xaml.cs">
       <DependentUpon>Reader.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Scripts\InternetP.cs" />
-    <Compile Include="Style\LoginClass.cs" />
-    <Compile Include="Style\tag.xaml.cs">
+    <Compile Include="Processor\Internet\InternetP.cs" />
+    <Compile Include="Scripts\LoginClass.cs" />
+    <Compile Include="Structs\Tag.cs" />
+    <Compile Include="UserControls\tag.xaml.cs">
       <DependentUpon>tag.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Style\TagTypes.cs" />
-    <Compile Include="Test\TestImageBox.xaml.cs">
-      <DependentUpon>TestImageBox.xaml</DependentUpon>
     </Compile>
     <Page Include="LoginWindow.xaml">
       <SubType>Designer</SubType>
@@ -151,7 +152,11 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Style\HitomiPanel.xaml">
+    <Page Include="UserControls\LargeHitomiPanel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UserControls\HitomiPanel.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -175,11 +180,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Style\tag.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Test\TestImageBox.xaml">
+    <Page Include="UserControls\tag.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -259,9 +260,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\ErrEncrypted.jpg">
+    <EmbeddedResource Include="Resources\ErrEncrypted.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\NoImage.jpg">
@@ -271,6 +272,7 @@
   <ItemGroup>
     <Resource Include="favicon.ico" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>

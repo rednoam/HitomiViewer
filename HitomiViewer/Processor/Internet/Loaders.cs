@@ -1,4 +1,5 @@
 ﻿using ExtensionMethods;
+using HitomiViewer.Structs;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -29,6 +30,21 @@ namespace HitomiViewer.Scripts.Loaders
             this.end = end ?? this.end;
         }
 
+        public void Default()
+        {
+            this.start = (int count) =>
+            {
+                Global.MainWindow.label.Content = "0/" + count;
+                Global.MainWindow.label.Visibility = System.Windows.Visibility.Visible;
+            };
+            this.update = (Hitomi h, int index, int max) =>
+            {
+                Global.MainWindow.label.Content = $"{index}/{max}";
+                Global.MainWindow.MainPanel.Children.Add(new UserControls.HitomiPanel(h, Global.MainWindow, true));
+            };
+            this.end = () => Global.MainWindow.label.Visibility = System.Windows.Visibility.Collapsed;
+        }
+
         public async void Parser(JObject jobject)
         {
             start(jobject["list"].Count());
@@ -46,15 +62,18 @@ namespace HitomiViewer.Scripts.Loaders
                     dir = $"https://hiyobi.me/reader/{tk["id"]}",
                     thumb = ImageProcessor.LoadWebImage($"https://cdn.hiyobi.me/tn/{tk["id"]}.jpg"),
                     thumbpath = $"https://cdn.hiyobi.me/tn/{tk["id"]}.jpg",
-                    files = imgs.ToList().Select(x => $"https://cdn.hiyobi.me/data/{tk["id"]}/{x["name"]}").ToArray()
+                    files = imgs.ToList().Select(x => $"https://cdn.hiyobi.me/data/{tk["id"]}/{x["name"]}").ToArray(),
+                    author = string.Join(", ", tk["artists"].Select(x => x["display"].ToString())),
+                    authors = tk["artists"].Select(x => x["display"].ToString()).ToArray(),
+                    Json = tk//tk.ToString()
                 };
                 foreach (JToken tags in tk["tags"])
                 {
-                    HitomiPanel.HitomiInfo.Tag tag = new HitomiPanel.HitomiInfo.Tag();
+                    Tag tag = new Tag();
                     if (tags["value"].ToString().Contains(":"))
-                        tag.types = (HitomiViewer.Tag.Types)Enum.Parse(typeof(HitomiViewer.Tag.Types), tags["value"].ToString().Split(':')[0]);
+                        tag.types = (Tag.Types)Enum.Parse(typeof(Tag.Types), tags["value"].ToString().Split(':')[0]);
                     else
-                        tag.types = HitomiViewer.Tag.Types.tag;
+                        tag.types = Tag.Types.tag;
                     tag.name = tags["display"].ToString();
                     h.tags.Add(tag);
                 }
@@ -74,26 +93,42 @@ namespace HitomiViewer.Scripts.Loaders
             if (imgs == null) return null;
             Hitomi h = new Hitomi
             {
-                id = obj["id"].ToString(),
-                name = obj["title"].ToString(),
+                id = obj.StringValue("id"),
+                name = obj.StringValue("title"),
                 type = type,
                 page = imgs.Count,
                 dir = $"https://hiyobi.me/reader/{text}",
                 thumb = ImageProcessor.LoadWebImage($"https://cdn.hiyobi.me/tn/{text}.jpg"),
                 thumbpath = $"https://cdn.hiyobi.me/tn/{text}.jpg",
-                files = imgs.ToList().Select(x => $"https://cdn.hiyobi.me/data/{text}/{x["name"]}").ToArray()
+                files = imgs.ToList().Select(x => $"https://cdn.hiyobi.me/data/{text}/{x["name"]}").ToArray(),
+                author = string.Join(", ", obj["artists"].Select(x => x["display"].ToString())),
+                authors = obj["artists"].Select(x => x["display"].ToString()).ToArray(),
+                Json = obj,
+                designType = new InternetP().DesignTypeFromInt(obj.IntValue("type") ?? 0),
+                language = obj.StringValue("language")
             };
             foreach (JToken tags in obj["tags"])
             {
-                HitomiPanel.HitomiInfo.Tag tag = new HitomiPanel.HitomiInfo.Tag();
+                Tag tag = new Tag();
                 if (tags["value"].ToString().Contains(":"))
-                    tag.types = (HitomiViewer.Tag.Types)Enum.Parse(typeof(HitomiViewer.Tag.Types), tags["value"].ToString().Split(':')[0]);
+                    tag.types = (Tag.Types)Enum.Parse(typeof(Tag.Types), tags["value"].ToString().Split(':')[0]);
                 else
-                    tag.types = HitomiViewer.Tag.Types.tag;
+                    tag.types = Tag.Types.tag;
                 tag.name = tags["display"].ToString();
                 h.tags.Add(tag);
             }
             return h;
+        }
+        public async Task Parser(string[] ids)
+        {
+            start(ids.Length);
+            for (int i = 0; i < ids.Length; i++)
+            {
+                this.text = ids[i];
+                Hitomi h = await Parser();
+                update(h, i, ids.Length);
+            }
+            end();
         }
         public void Search()
         {
@@ -108,6 +143,22 @@ namespace HitomiViewer.Scripts.Loaders
         public Action<Hitomi, int, int> update = null;
         public Action<int> start = null;
         public Action end = null;
+
+        public void Default()
+        {
+            this.start = (int count) =>
+            {
+                Global.MainWindow.label.Content = "0/" + count;
+                Global.MainWindow.label.Visibility = System.Windows.Visibility.Visible;
+            };
+            this.update = (Hitomi h, int index, int max) =>
+            {
+                Global.MainWindow.label.Content = $"{index}/{max}";
+                Global.MainWindow.MainPanel.Children.Add(new UserControls.HitomiPanel(h, Global.MainWindow, true));
+            };
+            this.end = () => Global.MainWindow.label.Visibility = System.Windows.Visibility.Collapsed;
+        }
+
         public async void Parser()
         {
             InternetP parser = new InternetP();
@@ -118,19 +169,47 @@ namespace HitomiViewer.Scripts.Loaders
             start(ids.Count());
             foreach (int id in ids)
             {
-                parser.url = $"https://ltn.hitomi.la/galleryblock/{id}.html";
                 parser.index = id;
-                Hitomi h = await parser.HitomiData();
-                parser.url = $"https://ltn.hitomi.la/galleries/{id}.js";
-                JObject info = await parser.HitomiGalleryInfo();
-                h.type = Hitomi.Type.Hitomi;
-                h.tags = parser.HitomiTags(info);
-                h.files = parser.HitomiFiles(info).ToArray();
-                h.page = h.files.Length;
-                h.thumb = ImageProcessor.LoadWebImage("https:" + h.thumbpath);
+                Hitomi h = await parser.HitomiData2();
                 update(h, ids.ToList().IndexOf(id), ids.Count());
             }
             end();
+        }
+        public async Task Parser(int[] ids)
+        {
+            start(ids.Length);
+            InternetP parser = new InternetP();
+            for (int i = 0; i < ids.Length; i++)
+            {
+                parser.index = ids[i];
+                Hitomi h = await parser.HitomiData2();
+                update(h, i, ids.Count());
+            }
+            end();
+        }
+    }
+    class InfoLoader
+    {
+        public static HitomiInfoOrg parseTXT(string s)
+        {
+            HitomiInfoOrg hitomiInfoOrg = new HitomiInfoOrg();
+            string[] lines = s.Split(new char[] { '\n', '\r' }).Where(x => x.Length > 0).ToArray();
+            foreach (string line in lines)
+            {
+                if (line.StartsWith("태그: "))
+                {
+                    hitomiInfoOrg.Tags = line.Remove(0, "태그: ".Length);
+                }
+                if (line.StartsWith("작가: "))
+                {
+                    hitomiInfoOrg.Author = line.Remove(0, "작가: ".Length);
+                }
+                if (line.StartsWith("갤러리 넘버: "))
+                {
+                    hitomiInfoOrg.Number = line.Remove(0, "갤러리 넘버: ".Length);
+                }
+            }
+            return hitomiInfoOrg;
         }
     }
 }

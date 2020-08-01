@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HitomiViewer.Structs;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,7 +14,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace HitomiViewer.Style
+namespace HitomiViewer.UserControls
 {
     /// <summary>
     /// tag.xaml에 대한 상호 작용 논리
@@ -46,7 +47,7 @@ namespace HitomiViewer.Style
                 "TagType",
                 typeof(Tag.Types),
                 typeof(tag),
-                new PropertyMetadata(HitomiViewer.Tag.Types.tag)
+                new PropertyMetadata(Structs.Tag.Types.tag)
             );
         public static readonly DependencyProperty TagNameProperty
             = DependencyProperty.Register(

@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HitomiViewer.Style
+namespace HitomiViewer.Scripts
 {
     class LoginClass
     {

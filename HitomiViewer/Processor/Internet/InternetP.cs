@@ -1,5 +1,6 @@
 ﻿using ExtensionMethods;
 using HitomiViewer.Scripts.Loaders;
+using HitomiViewer.Structs;
 using HtmlAgilityPack;
 using Newtonsoft.Json.Linq;
 using System;
@@ -14,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace HitomiViewer.Scripts
 {
-    class InternetP
+    partial class InternetP
     {
         public string url { get; set; }
         public string data { get; set; }
@@ -31,6 +32,12 @@ namespace HitomiViewer.Scripts
             if (data != null) this.data = data;
             if (keyword != null) this.keyword = keyword;
             if (index != null) this.index = index.Value;
+        }
+
+        public InternetP SetData(string data)
+        {
+            this.data = data;
+            return this;
         }
 
         public async void LoadJObject(Action<JObject> callback)
@@ -134,6 +141,13 @@ namespace HitomiViewer.Scripts
             h.thumbpath = image.GetAttributeValue("src", "");
             if (h.thumbpath == "")
                 h.thumbpath = image.GetDataAttribute("src").Value;
+            //HtmlNode artist = doc.DocumentNode.SelectSingleNode("//div[@class=\"artist-list\"]/ul");
+            HtmlNodeCollection artists = doc.DocumentNode.SelectNodes("//div[@class=\"artist-list\"]/ul/li");
+            if (artists != null)
+            {
+                h.authors = artists.Select(x => x.InnerText).ToArray();
+                h.author = string.Join(", ", h.authors);
+            }
             HtmlNode table = doc.DocumentNode.SelectSingleNode("//table[@class=\"dj-desc\"]");
             for (var i = 0; i < table.ChildNodes.Count-1; i += 2)
             {
@@ -149,7 +163,7 @@ namespace HitomiViewer.Scripts
             JObject jObject = JObject.Parse(html.Replace("var galleryinfo = ", ""));
             return jObject;
         }
-        public async Task<Hitomi> HitomiGalleryData()
+        public async Task<Hitomi> HitomiGalleryData(Hitomi org)
         {
             JObject jObject = await HitomiGalleryInfo();
             List<HitomiFile> files = new List<HitomiFile>();
@@ -163,14 +177,31 @@ namespace HitomiViewer.Scripts
                     haswebp = Convert.ToBoolean(int.Parse(tag1["haswebp"].ToString()))
                 });
             }
-            return null;
+            org.language = jObject.StringValue("language");
+            org.id = jObject.StringValue("id");
+            org.designType = DesignTypeFromString(jObject.StringValue("type"));
+            return org;
         }
-        public List<HitomiPanel.HitomiInfo.Tag> HitomiTags(JObject jObject)
+        public async Task<Hitomi> HitomiData2()
         {
-            List<HitomiPanel.HitomiInfo.Tag> tags = new List<HitomiPanel.HitomiInfo.Tag>();
+            url = $"https://ltn.hitomi.la/galleryblock/{index}.html";
+            Hitomi h = await HitomiData();
+            url = $"https://ltn.hitomi.la/galleries/{index}.js";
+            JObject info = await HitomiGalleryInfo();
+            h.type = Hitomi.Type.Hitomi;
+            h.tags = HitomiTags(info);
+            h.files = HitomiFiles(info).ToArray();
+            h.page = h.files.Length;
+            h.thumb = ImageProcessor.LoadWebImage("https:" + h.thumbpath);
+            h.Json = info;
+            return await HitomiGalleryData(h);
+        }
+        public List<Tag> HitomiTags(JObject jObject)
+        {
+            List<Tag> tags = new List<Tag>();
             foreach (JToken tag1 in jObject["tags"])
             {
-                HitomiPanel.HitomiInfo.Tag tag = new HitomiPanel.HitomiInfo.Tag();
+                Tag tag = new Tag();
                 tag.types = Tag.Types.tag;
                 if (tag1.SelectToken("female") != null && tag1["female"].ToString() == "1")
                     tag.types = Tag.Types.female;
@@ -198,6 +229,34 @@ namespace HitomiViewer.Scripts
             var response = await client.GetAsync(url);
             var pageContents = await response.Content.ReadAsByteArrayAsync();
             return pageContents;
+        }
+        public HitomiInfo.Type DesignTypeFromInt(int s)
+        {
+            switch (s)
+            {
+                case 1:
+                    return HitomiInfo.Type.doujinshi;
+                case 2:
+                    return HitomiInfo.Type.manga;
+                case 3:
+                    return HitomiInfo.Type.artistcg;
+                default:
+                    return HitomiInfo.Type.none;
+            }
+        }
+        public HitomiInfo.Type DesignTypeFromString(string s)
+        {
+            switch (s)
+            {
+                case "doujinshi":
+                    return HitomiInfo.Type.doujinshi;
+                case "artistcg":
+                    return HitomiInfo.Type.artistcg;
+                case "manga":
+                    return HitomiInfo.Type.manga;
+                default:
+                    return HitomiInfo.Type.none;
+            }
         }
         public async Task<List<Hitomi>> LoadCompre(List<string> items)
         {
@@ -244,8 +303,8 @@ namespace HitomiViewer.Scripts
                         files = innerFiles,
                         thumb = ImageProcessor.ProcessEncrypt(innerFiles.First()),
                         type = Hitomi.Type.Folder,
-                        FolderByte = Global.MainWindow.GetFolderByte(item),
-                        SizePerPage = Global.MainWindow.GetSizePerPage(item)
+                        FolderByte = File2.GetFolderByte(item),
+                        SizePerPage = File2.GetSizePerPage(item)
                     };
                     update(h, items.IndexOf(item), items.Count);
                 }
@@ -253,14 +312,30 @@ namespace HitomiViewer.Scripts
             end();
             return res;
         }
-
-        public async Task<string> Load(string Url)
+        public async Task<bool> isHiyobi(int? index = null)
         {
-            if (Url.Last() == '/') Url = Url.Remove(Url.Length - 1);
+            try
+            {
+                await Load($"https://cdn.hiyobi.me/data/json/{(index ?? this.index).ToString()}.json");
+                return true;
+            }
+            catch { return false; }
+        }
+
+        public long GetWebSize(string url = null)
+        {
+            System.Net.WebClient client = new System.Net.WebClient();
+            client.OpenRead(url ?? this.url);
+            long bytes_total = Convert.ToInt64(client.ResponseHeaders["Content-Length"]);
+            return bytes_total;
+        }
+        public async Task<string> Load(string url = null)
+        {
+            url = url ?? this.url;
+            if (url.Last() == '/') url = url.Remove(url.Length - 1);
             HttpClient client = new HttpClient();
-            var response = await client.GetAsync(Url);
-            var pageContents = await response.Content.ReadAsStringAsync();
-            return pageContents;
+            HttpResponseMessage response = await client.GetAsync(url);
+            return await response.Content.ReadAsStringAsync();
         }
         public int[] ByteArrayToIntArray(byte[] arr)
         {
@@ -280,15 +355,6 @@ namespace HitomiViewer.Scripts
             string first = str.Last().ToString();
             string second = string.Join("", str.Substring(str.Length - 3).Take(2));
             return $"{first}/{second}/{str}";
-        }
-
-        class HitomiFile
-        {
-            public string path { get; set; }
-            public string hash { get; set; }
-            public string name { get; set; }
-            public bool hasavif { get; set; }
-            public bool haswebp { get; set; }
         }
     }
 }

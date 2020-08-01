@@ -17,24 +17,38 @@ namespace HitomiViewer.Scripts
         public JObject Load()
         {
             if (!File.Exists(path))
-                return null;
+                return new JObject();
             config = JObject.Parse(File.ReadAllText(path));
             return config;
         }
 
+        public string StringValue(string path)
+        {
+            if (config == null) return null;
+            if(!config.ContainsKey(path)) return null;
+            return config[path].ToString();
+        }
         public bool? BoolValue(string path)
         {
+            if (config == null) return null;
             if (!config.ContainsKey(path)) return null;
             return bool.Parse(config[path].ToString());
         }
         public IList<T> ArrayValue<T>(string path) where T : class
         {
+            if (config == null) return new List<T>();
             if (!config.ContainsKey(path)) return new List<T>();
             return config[path].ToObject<List<T>>();
         }
 
         public bool Save(JObject data)
         {
+            this.config = data;
+            Global.cfg = this;
+            Global.cfgob = data;
+            Global.Password = StringValue("pw");
+            Global.FileEn = BoolValue("fe") ?? false;
+            Global.AutoFileEn = BoolValue("autofe") ?? false;
             File.WriteAllText(path, data.ToString());
             return true;
         }

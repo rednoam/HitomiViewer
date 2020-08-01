@@ -12,6 +12,8 @@ using System.Windows;
 using Bitmap = System.Drawing.Bitmap;
 using System.Windows.Controls;
 using System.Windows.Threading;
+using HitomiViewer.UserControls;
+using Newtonsoft.Json.Linq;
 
 namespace ExtensionMethods
 {
@@ -19,7 +21,6 @@ namespace ExtensionMethods
     {
         [System.Runtime.InteropServices.DllImport("Shlwapi.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
         public static extern int StrCmpLogicalW(string psz1, string psz2);
-
         public static IEnumerable<string> CustomSort(this IEnumerable<string> list)
         {
             int maxLen = list.Select(s => s.Length).Max();
@@ -32,12 +33,10 @@ namespace ExtensionMethods
             .OrderBy(x => x.SortStr)
             .Select(x => x.OrgStr);
         }
-
         public static IEnumerable<string> FileInfoSort(this IEnumerable<string> list)
         {
             return list.Select(fn => new FileInfo(fn)).OrderBy(f => f.Name).Select(f => f.FullName);
         }
-
         public static void HitomiPanelSort(this StackPanel MainPanel)
         {
             HitomiPanel[] childs = MainPanel.Children.Cast<HitomiPanel>().ToArray();
@@ -58,7 +57,6 @@ namespace ExtensionMethods
                 panelKey[name].thumbNail.Source = panelKey[name].thumbNail.Source;
             }
         }
-
         public static Hitomi[] HitomiSort(this Hitomi[] hlist)
         {
             Dictionary<string, Hitomi> hitomiKey = new Dictionary<string, Hitomi>();
@@ -76,23 +74,19 @@ namespace ExtensionMethods
             }
             return hitomis.ToArray();
         }
-
         public static string[] ESort(this string[] list)
         {
             return list.Select(f => new FileInfo(f)).ToArray().ExplorerSort().Select(f => f.FullName).ToArray();
         }
-
         public static string[] IEESort(this IEnumerable<string> list)
         {
             return list.Select(f => new FileInfo(f)).ToArray().ExplorerSort().Select(f => f.FullName).ToArray();
         }
-
         public static FileInfo[] ExplorerSort(this FileInfo[] list)
         {
             Array.Sort(list, delegate (FileInfo x, FileInfo y) { return StrCmpLogicalW(x.Name, y.Name); });
             return list;
         }
-
         public static BitmapImage ToImage(this byte[] array)
         {
             using (System.IO.MemoryStream ms = new System.IO.MemoryStream(array))
@@ -104,7 +98,6 @@ namespace ExtensionMethods
                 return image;
             }
         }
-
         public static BitmapImage ToBitmapImage(this Bitmap bitmap)
         {
             // Bitmap 담을 메모리스트림 준비
@@ -119,7 +112,6 @@ namespace ExtensionMethods
             bi.EndInit();
             return bi;
         }
-
         public static BitmapSource ToBitmapSource(this Bitmap bitmap)
         {
             return Imaging.CreateBitmapSourceFromHBitmap(bitmap.GetHbitmap(),
@@ -127,26 +119,51 @@ namespace ExtensionMethods
                                       Int32Rect.Empty,
                                       BitmapSizeOptions.FromEmptyOptions());
         }
-
         public static Hitomi Copy(this Hitomi hitomi)
         {
             return Hitomi.Copy(hitomi);
         }
-
         public static string RemoveSpace(this string s) => s.Replace(" ", string.Empty);
-
-        static internal ImageSource doGetImageSourceFromResource(string psAssemblyName, string psResourceName)
-        {
-            Uri oUri = new Uri("pack://application:,,,/" + psAssemblyName + ";component/" + psResourceName, UriKind.RelativeOrAbsolute);
-            return BitmapFrame.Create(oUri);
-        }
-
         public static bool isUrl(this string s)
         {
             Uri uriResult;
             bool result = Uri.TryCreate(s, UriKind.Absolute, out uriResult)
                 && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
             return result;
+        }
+        public static string StringValue(this JObject config, string path)
+        {
+            if (config == null) return null;
+            if (!config.ContainsKey(path)) return null;
+            return config[path].ToString();
+        }
+        public static int? IntValue(this JObject config, string path)
+        {
+            int res;
+            if (config == null) return null;
+            if (!config.ContainsKey(path)) return null;
+            if (int.TryParse(config[path].ToString(), out res)) return null;
+            return res;
+        }
+        public static double? DoubleValue(this JObject config, string path)
+        {
+            double res;
+            if (config == null) return null;
+            if (!config.ContainsKey(path)) return null;
+            if (double.TryParse(config[path].ToString(), out res)) return null;
+            return res;
+        }
+        public static bool? BoolValue(this JObject config, string path)
+        {
+            if (config == null) return null;
+            if (!config.ContainsKey(path)) return null;
+            return bool.Parse(config[path].ToString());
+        }
+        public static IList<T> ArrayValue<T>(this JObject config, string path) where T : class
+        {
+            if (config == null) return new List<T>();
+            if (!config.ContainsKey(path)) return new List<T>();
+            return config[path].ToObject<List<T>>();
         }
     }
 }

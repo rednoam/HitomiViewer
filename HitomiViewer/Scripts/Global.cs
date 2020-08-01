@@ -24,7 +24,7 @@ namespace HitomiViewer
         public const int Magnif = 4;
         public static Config cfg = new Config();
         public static JObject cfgob = cfg.Load();
-        public static string Password = cfgob["pw"].ToString();
+        public static string Password = cfg.StringValue("pw");
         public static bool FileEn = cfg.BoolValue("fe") ?? false;
         public static bool AutoFileEn = cfg.BoolValue("autofe") ?? false;
     }

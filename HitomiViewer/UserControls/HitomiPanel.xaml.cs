@@ -1,7 +1,8 @@
 ﻿using ExtensionMethods;
 using HitomiViewer.Encryption;
 using HitomiViewer.Scripts;
-using HitomiViewer.Style;
+using HitomiViewer.Scripts.Loaders;
+using HitomiViewer.Structs;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -23,7 +24,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Path = System.IO.Path;
 
-namespace HitomiViewer
+namespace HitomiViewer.UserControls
 {
     /// <summary>
     /// HitomiPanel.xaml에 대한 상호 작용 논리
@@ -34,8 +35,10 @@ namespace HitomiViewer
         private BitmapImage thumb;
         private MainWindow MainWindow;
         private Hitomi.Type ftype = Hitomi.Type.Folder;
-        public HitomiPanel(Hitomi h, MainWindow sender)
+        private bool large;
+        public HitomiPanel(Hitomi h, MainWindow sender, bool large = false)
         {
+            this.large = large;
             this.h = h;
             this.thumb = h.thumb;
             this.MainWindow = sender;
@@ -52,9 +55,7 @@ namespace HitomiViewer
         private void Init()
         {
             if (h.thumb == null)
-            {
-                h.thumb = new BitmapImage(new Uri("/Resources/NoImage.jpg", UriKind.Relative));
-            }
+                h.thumb = ImageProcessor.FromResource("NoImage.jpg");
             thumbNail.Source = h.thumb;
             thumbBrush.ImageSource = h.thumb;
             thumbNail.ToolTip = GetToolTip(panel.Height);
@@ -92,12 +93,13 @@ namespace HitomiViewer
                 sizeperpageLabel.Content = Math.Round(SizePerPage / GB, 2) + "GB";
 
             ChangeColor(this);
+            HitomiInfo hInfo = null;
             Uri uriResult;
             bool result = Uri.TryCreate(h.dir, UriKind.Absolute, out uriResult)
                 && ((uriResult.Scheme == Uri.UriSchemeHttp) || (uriResult.Scheme == Uri.UriSchemeHttps));
             if (h.tags.Count > 0)
             {
-                foreach (HitomiInfo.Tag tag in h.tags)
+                foreach (Tag tag in h.tags)
                 {
                     tag tag1 = new tag
                     {
@@ -106,13 +108,13 @@ namespace HitomiViewer
                     };
                     switch (tag.types)
                     {
-                        case HitomiViewer.Tag.Types.female:
+                        case Structs.Tag.Types.female:
                             tag1.TagColor = new SolidColorBrush(Color.FromRgb(255, 94, 94));
                             break;
-                        case HitomiViewer.Tag.Types.male:
+                        case Structs.Tag.Types.male:
                             tag1.TagColor = new SolidColorBrush(Color.FromRgb(65, 149, 244));
                             break;
-                        case HitomiViewer.Tag.Types.tag:
+                        case Structs.Tag.Types.tag:
                         default:
                             tag1.TagColor = new SolidColorBrush(Color.FromRgb(153, 153, 153));
                             break;
@@ -127,14 +129,36 @@ namespace HitomiViewer
             else if (File.Exists(System.IO.Path.Combine(h.dir, "info.json")))
             {
                 JObject jobject = JObject.Parse(File.ReadAllText(System.IO.Path.Combine(h.dir, "info.json")));
+                
+                h.id = jobject["id"].ToString();
+                HitomiInfoOrg hInfoOrg = new HitomiInfoOrg();
                 foreach (JToken tags in jobject["tags"])
                 {
                     tag tag = new tag();
-                    tag.TagType = (HitomiViewer.Tag.Types)int.Parse(tags["types"].ToString());
+                    tag.TagType = (Tag.Types)int.Parse(tags["types"].ToString());
                     tag.TagName = tags["name"].ToString();
+                    switch (tag.TagType)
+                    {
+                        case Structs.Tag.Types.female:
+                            tag.TagColor = new SolidColorBrush(Color.FromRgb(255, 94, 94));
+                            break;
+                        case Structs.Tag.Types.male:
+                            tag.TagColor = new SolidColorBrush(Color.FromRgb(65, 149, 244));
+                            break;
+                        case Structs.Tag.Types.tag:
+                        default:
+                            tag.TagColor = new SolidColorBrush(Color.FromRgb(153, 153, 153));
+                            break;
+                    }
                     tagPanel.Children.Add(tag);
                 }
                 ftype = (Hitomi.Type)int.Parse(jobject["type"].ToString());
+                if (jobject.ContainsKey("authors"))
+                    h.authors = jobject["authors"].Select(x => x.ToString()).ToArray();
+                else if (jobject.ContainsKey("author"))
+                    h.authors = jobject["author"].ToString().Split(new string[] { ", " }, StringSplitOptions.None);
+                else
+                    h.authors = new string[0];
             }
             else if (File.Exists(System.IO.Path.Combine(h.dir, "info.txt")))
             {
@@ -146,9 +170,20 @@ namespace HitomiViewer
                     {
                         hitomiInfoOrg.Tags = line.Remove(0, "태그: ".Length);
                     }
+                    if (line.StartsWith("작가: "))
+                    {
+                        hitomiInfoOrg.Author = line.Remove(0, "작가: ".Length);
+                    }
+                    if (line.StartsWith("갤러리 넘버: "))
+                    {
+                        hitomiInfoOrg.Number = line.Remove(0, "갤러리 넘버: ".Length);
+                    }
                 }
-                HitomiInfo Hinfo = HitomiInfo.Parse(hitomiInfoOrg);
-                foreach (HitomiInfo.Tag tag in Hinfo.Tags)
+                hInfo = HitomiInfo.Parse(hitomiInfoOrg);
+                h.id = hInfo.Number.ToString();
+                h.author = hInfo.Author;
+                h.authors = hInfo.Author.Split(new string[] { ", " }, StringSplitOptions.None);
+                foreach (Tag tag in hInfo.Tags)
                 {
                     tag tag1 = new tag
                     {
@@ -157,18 +192,45 @@ namespace HitomiViewer
                     };
                     switch (tag.types)
                     {
-                        case HitomiViewer.Tag.Types.female:
+                        case Structs.Tag.Types.female:
                             tag1.TagColor = new SolidColorBrush(Color.FromRgb(255, 94, 94));
                             break;
-                        case HitomiViewer.Tag.Types.male:
+                        case Structs.Tag.Types.male:
                             tag1.TagColor = new SolidColorBrush(Color.FromRgb(65, 149, 244));
                             break;
-                        case HitomiViewer.Tag.Types.tag:
+                        case Structs.Tag.Types.tag:
                         default:
                             tag1.TagColor = new SolidColorBrush(Color.FromRgb(153, 153, 153));
                             break;
                     }
                     tagPanel.Children.Add(tag1);
+                }
+            }
+            else
+            {
+                h.authors = new string[0];
+            }
+
+            if (large)
+            {
+                panel.Height = 150;
+                authorsStackPanel.Visibility = Visibility.Visible;
+                foreach (string artist in h.authors)
+                {
+                    if (h.authors.ToList().IndexOf(artist) != 0)
+                    {
+                        Label dot = new Label();
+                        dot.Content = ", ";
+                        dot.Padding = new Thickness(0, 5, 2.5, 5);
+                        authorsPanel.Children.Add(dot);
+                    }
+                    Label lb = new Label();
+                    lb.Content = artist;
+                    lb.Foreground = new SolidColorBrush(Colors.Blue);
+                    lb.Cursor = Cursors.Hand;
+                    lb.MouseDown += authorLabel_MouseDown;
+                    lb.Padding = new Thickness(0, 5, 0, 5);
+                    authorsPanel.Children.Add(lb);
                 }
             }
 
@@ -189,8 +251,11 @@ namespace HitomiViewer
             {
                 case Hitomi.Type.Folder:
                     Folder_Remove.Visibility = Visibility.Visible;
-                    Encrypt.Visibility = Visibility.Visible;
-                    Decrypt.Visibility = Visibility.Visible;
+                    if (Global.Password != null)
+                    {
+                        Encrypt.Visibility = Visibility.Visible;
+                        Decrypt.Visibility = Visibility.Visible;
+                    }
                     break;
                 case Hitomi.Type.Hiyobi:
                     Hiyobi_Download.Visibility = Visibility.Visible;
@@ -199,12 +264,13 @@ namespace HitomiViewer
                     Hitomi_Download.Visibility = Visibility.Visible;
                     break;
             }
-            switch (ftype)
+            if (h.id == null || h.id == "")
             {
-                case Hitomi.Type.Hiyobi:
-                    Folder_Hiyobi_Search.Visibility = Visibility.Visible;
-                    break;
+                DownloadData.Visibility = Visibility.Collapsed;
+                DownloadImage.Visibility = Visibility.Collapsed;
             }
+            if (ftype == Hitomi.Type.Hiyobi)
+                Folder_Hiyobi_Search.Visibility = Visibility.Visible;
             Config cfg = new Config();
             JObject obj = cfg.Load();
             List<string> favs = cfg.ArrayValue<string>("fav").ToList();
@@ -245,7 +311,6 @@ namespace HitomiViewer
             };
             return toolTip;
         }
-
         public static void ChangeColor(HitomiPanel hpanel)
         {
             DockPanel panel = hpanel.panel as DockPanel;
@@ -254,7 +319,6 @@ namespace HitomiViewer
             DockPanel InfoPanel = panel.Children[1] as DockPanel;
 
             StackPanel bottomPanel = InfoPanel.Children[1] as StackPanel;
-            //ScrollViewer scrollViewer = InfoPanel.Children[2] as ScrollViewer;
 
             Label nameLabel = InfoPanel.Children[0] as Label;
 
@@ -267,7 +331,6 @@ namespace HitomiViewer
             border.Background = new SolidColorBrush(Global.imagecolor);
             InfoPanel.Background = new SolidColorBrush(Global.Menuground);
             bottomPanel.Background = new SolidColorBrush(Global.Menuground);
-            //scrollViewer.Background = new SolidColorBrush(Global.Menuground);
             nameLabel.Foreground = new SolidColorBrush(Global.fontscolor);
             sizeLabel.Foreground = new SolidColorBrush(Global.fontscolor);
             pageLabel.Foreground = new SolidColorBrush(Global.fontscolor);
@@ -276,7 +339,8 @@ namespace HitomiViewer
 
         private void Folder_Remove_Click(object sender, RoutedEventArgs e)
         {
-            MainWindow.RemoveChild(this, h.dir);
+            Global.MainWindow.MainPanel.Children.Remove(this);
+            Directory.Delete(h.dir, true);
         }
         private void Folder_Open_Click(object sender, RoutedEventArgs e)
         {
@@ -296,16 +360,11 @@ namespace HitomiViewer
                     WebClient wc = new WebClient();
                     if (!File.Exists($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg"))
                     {
+                        h.encrypted = Global.AutoFileEn;
                         if (Global.AutoFileEn)
-                        {
-                            wc.DownloadDataAsync(new Uri(file), $"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg.lock");
-                            wc.DownloadDataCompleted += (object sender2, DownloadDataCompletedEventArgs e2) =>
-                            {
-                                File.WriteAllBytes(e2.UserState.ToString(),
-                                    AES128.Encrypt(e2.Result, Global.Password)); ;
-                            };
-                        }
-                        else wc.DownloadFileAsync(new Uri(file), $"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg");
+                            FileEncrypt.DownloadAsync(new Uri(file), $"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg.lock");
+                        else
+                            wc.DownloadFileAsync(new Uri(file), $"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg");
                     }
                 }
                 Process.Start($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}");
@@ -326,15 +385,9 @@ namespace HitomiViewer
                     wc.Headers.Add("referer", "https://hitomi.la/");
                     if (!File.Exists($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg"))
                     {
+                        h.encrypted = Global.AutoFileEn;
                         if (Global.AutoFileEn)
-                        {
-                            wc.DownloadDataAsync(new Uri(file), $"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg.lock");
-                            wc.DownloadDataCompleted += (object sender2, DownloadDataCompletedEventArgs e2) =>
-                            {
-                                File.WriteAllBytes(e2.UserState.ToString(),
-                                    AES128.Encrypt(e2.Result, Global.Password)); ;
-                            };
-                        }
+                            FileEncrypt.DownloadAsync(new Uri(file), $"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg.lock");
                         else wc.DownloadFileAsync(new Uri(file), $"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg");
                     }
                 }
@@ -366,7 +419,7 @@ namespace HitomiViewer
                         dir = $"https://hiyobi.me/reader/{tk["id"]}",
                         page = imgs.Count,
                         thumbpath = $"https://cdn.hiyobi.me/tn/{tk["id"]}.jpg",
-                        thumb = MainWindow.LoadImage($"https://cdn.hiyobi.me/tn/{tk["id"]}.jpg"),
+                        thumb = await ImageProcessor.LoadWebImageAsync($"https://cdn.hiyobi.me/tn/{tk["id"]}.jpg"),
                         type = Hitomi.Type.Hiyobi
                     };
                     Int64 size = 0;
@@ -375,15 +428,15 @@ namespace HitomiViewer
                     h.SizePerPage = size / imgs.Count;
                     foreach (JToken tags in tk["tags"])
                     {
-                        HitomiPanel.HitomiInfo.Tag tag = new HitomiPanel.HitomiInfo.Tag();
+                        Tag tag = new Tag();
                         if (tags["value"].ToString().Contains(":"))
                         {
-                            tag.types = (HitomiViewer.Tag.Types)Enum.Parse(typeof(HitomiViewer.Tag.Types), tags["value"].ToString().Split(':')[0]);
+                            tag.types = (Tag.Types)Enum.Parse(typeof(Tag.Types), tags["value"].ToString().Split(':')[0]);
                             tag.name = tags["display"].ToString();
                         }
                         else
                         {
-                            tag.types = HitomiViewer.Tag.Types.tag;
+                            tag.types = Structs.Tag.Types.tag;
                             tag.name = tags["display"].ToString();
                         }
                         h.tags.Add(tag);
@@ -407,11 +460,14 @@ namespace HitomiViewer
                 File.Delete(file);
                 File.WriteAllBytes(file + ".lock", enc);
             }
+            h.files = h.files.Select(x => x + ".lock").ToArray();
+            h.encrypted = true;
             Process.Start(h.dir);
         }
         private void Decrypt_Click(object sender, RoutedEventArgs e)
         {
             string[] files = Directory.GetFiles(h.dir);
+            bool err = false;
             foreach (string file in files)
             {
                 try
@@ -421,8 +477,23 @@ namespace HitomiViewer
                     File.Delete(file);
                     File.WriteAllBytes(Path.Combine(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file)), enc);
                 }
-                catch { }
+                catch { err = true; }
             }
+            if (err)
+            {
+                while (true)
+                {
+                    InputBox box = new InputBox("비밀번호를 입력해주세요.", "비밀번호가 맞지 않습니다.", "");
+                    string password = box.ShowDialog();
+                    if (box.canceled) return;
+                    if (FileDecrypt.TryFiles(h.dir, SHA256.Hash(password), excepts: new string[] { ".txt", ".json" })) break;
+                }
+            }
+            h.thumb = ImageProcessor.ProcessEncrypt(File2.GetImages(h.dir).First());
+            h.files = h.files.Select(x => Path.Combine(Path.GetDirectoryName(x), Path.GetFileNameWithoutExtension(x))).ToArray();
+            h.encrypted = false;
+            thumbNail.Source = h.thumb;
+            thumbNail.ToolTip = GetToolTip(panel.Height);
             Process.Start(h.dir);
         }
         private void Favorite_Click(object sender, RoutedEventArgs e)
@@ -449,68 +520,95 @@ namespace HitomiViewer
             cfg.Save(obj);
             ContextSetup();
         }
-
-        public class HitomiInfoOrg
+        private async void authorLabel_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            public string Number { get; set; }
-            public string Title { get; set; }
-            public string Author { get; set; }
-            public string Group { get; set; }
-            public string Types { get; set; }
-            public string Series { get; set; }
-            public string Character { get; set; }
-            public string Tags { get; set; }
-            public string Language { get; set; }
+            bool result = await new InternetP(index: int.Parse(h.id)).isHiyobi();
+            Label lbsender = sender as Label;
+            string author = lbsender.Content.ToString();
+            if (result)
+            {
+                Global.MainWindow.Hiyobi_Search_Text.Text = "artist:" + author;
+                Global.MainWindow.Hiyobi_Search_Button_Click(this, null);
+            }
+            else
+            {
+                Global.MainWindow.Hitomi_Search_Text.Text = "artist:" + author;
+                Global.MainWindow.Hitomi_Search_Button_Click(this, null);
+            }
         }
-        public class HitomiInfo
+        private async void DownloadData_Click(object sender, RoutedEventArgs e)
         {
-            public static HitomiInfo Parse(HitomiInfoOrg org)
+            bool hiyobi = ftype == Hitomi.Type.Hiyobi;
+            if (ftype == Hitomi.Type.Folder)
             {
-                HitomiInfo info = new HitomiInfo();
-
+                bool result = await new InternetP(index: int.Parse(h.id)).isHiyobi();
+                hiyobi = result;
+            }
+            if (hiyobi)
+            {
+                Hitomi h2 = await new HiyobiLoader(text: h.id).Parser();
+                if (h2.name == "정보없음" && h2.id == "0")
                 {
-                    List<Tag> tags = new List<Tag>();
-                    string[] arr = org.Tags.Split(new string[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
-                    foreach (var item in arr)
-                    {
-                        Tag tag = new Tag();
-                        if (item.Contains(":"))
-                        {
-                            tag.types = (HitomiViewer.Tag.Types)Enum.Parse(typeof(HitomiViewer.Tag.Types), item.Split(':')[0]);
-                            tag.name = string.Join(":", item.Split(':').Skip(1));
-                        }
-                        else
-                        {
-                            tag.types = HitomiViewer.Tag.Types.tag;
-                            tag.name = item;
-                        }
-
-                        tags.Add(tag);
-                    }
-                    info.Tags = tags.ToArray();
+                    MessageBox.Show("데이터를 받아오는데 실패했습니다.");
+                    return;
                 }
-                return info;
+                File.WriteAllText(Path.Combine(h.dir, "info.json"), JObject.FromObject(h2).ToString());
+                MessageBox.Show("데이터를 성공적으로 받았습니다.");
+                authorsPanel.Children.Clear();
+                authorsPanel.Children.Add(new Label { Content = "작가 :" });
+                tagPanel.Children.Clear();
+                Init();
             }
-            public int Number { get; set; }
-            public string Title { get; set; }
-            public string Author { get; set; }
-            public string Group { get; set; }
-            public Type Types { get; set; }
-            public string Series { get; set; }
-            public string Character { get; set; }
-            public Tag[] Tags { get; set; }
-            public string Language { get; set; }
-
-            public enum Type
+            if (!hiyobi)
             {
-                doujinshi,
-                artistcg
+                InternetP parser = new InternetP();
+                parser.index = int.Parse(h.id);
+                Hitomi h2 = await parser.HitomiData2();
+                File.WriteAllText(Path.Combine(h.dir, "info.json"), JObject.FromObject(h2).ToString());
+                MessageBox.Show("데이터를 성공적으로 받았습니다.");
+                authorsPanel.Children.Clear();
+                authorsPanel.Children.Add(new Label { Content = "작가 :" });
+                tagPanel.Children.Clear();
+                Init();
             }
-
-            public class Tag
+        }
+        private async void DownloadImage_Click(object sender, RoutedEventArgs e)
+        {
+            bool hiyobi = ftype == Hitomi.Type.Hiyobi;
+            if (ftype == Hitomi.Type.Folder)
             {
-                public HitomiViewer.Tag.Types types { get; set; }
-                public string name { get; set; }
+                bool result = await new InternetP(index: int.Parse(h.id)).isHiyobi();
+                hiyobi = result;
+            }
+            if (hiyobi)
+            {
+                Hitomi h2 = await new HiyobiLoader(text: h.id).Parser();
+                File.WriteAllText(Path.Combine(h.dir, "info.json"), JObject.FromObject(h2).ToString());
+                string filename = h2.name.Replace("|", "｜").Replace("?", "？");
+                foreach (string file in Directory.GetFiles(h.dir))
+                {
+                    if (file.EndsWith(".lock") || file.EndsWith(".jpg"))
+                        File.Delete(file);
+                }
+                for (int i = 0; i < h2.files.Length; i++)
+                {
+                    string file = h2.files[i];
+                    WebClient wc = new WebClient();
+                    h.encrypted = Global.AutoFileEn;
+                    if (Global.AutoFileEn)
+                        FileEncrypt.DownloadAsync(new Uri(file), $"{h.dir}/{i}.jpg.lock");
+                    else
+                        wc.DownloadFileAsync(new Uri(file), $"{h.dir}/{i}.jpg");
+                }
+                Process.Start(h.dir);
+                authorsPanel.Children.Clear();
+                authorsPanel.Children.Add(new Label { Content = "작가 :" });
+                tagPanel.Children.Clear();
+                Init();
+            }
+            if (!hiyobi)
+            {
+                
             }
         }
     }

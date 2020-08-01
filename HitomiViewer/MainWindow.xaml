@@ -59,6 +59,8 @@
                         <MenuItem x:Name="FavoriteBtn" Header="즐겨찾기" Click="FavoriteBtn_Click" />
                         <MenuItem x:Name="Encrypt" Header="전체 암호화" Click="Encrypt_Click" />
                         <MenuItem x:Name="Decrypt" Header="전체 복호화" Click="Decrypt_Click" />
+                        <MenuItem x:Name="ExportNumber" Header="번호 내보내기" Click="ExportNumber_Click" />
+                        <MenuItem x:Name="ImportNumber" Header="번호 불러오기" Click="ImportNumber_Click" />
                     </MenuItem>
                     <MenuItem Header="인터넷" x:Name="InternetMenu" Background="White">
                         <MenuItem x:Name="MenuHiyobi" Header="Hiyobi.me">

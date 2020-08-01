@@ -18,12 +18,15 @@ namespace HitomiViewer
         string errormessage = "Invalid answer";//error messagebox content
         string errortitle = "Error";//error messagebox heading title
         string okbuttontext = "OK";//Ok button content
+        string cancelbuttontext = "CANCEL";//Ok button content
         Brush BoxBackgroundColor = Brushes.White;// Window Background
         Brush InputBackgroundColor = Brushes.White;// Textbox Background
         bool clicked = false;
         TextBox input = new TextBox();
         Button ok = new Button();
+        Button cancel = new Button();
         bool inputreset = false;
+        public bool canceled = false;
 
         public InputBox(string content)
         {
@@ -117,13 +120,18 @@ namespace HitomiViewer
             ok.Content = okbuttontext;
             ok.HorizontalAlignment = HorizontalAlignment.Center;
             sp1.Children.Add(ok);
-
+            cancel.Width = 70;
+            cancel.Height = 30;
+            cancel.Click += cancel_Click;
+            cancel.Content = cancelbuttontext;
+            cancel.HorizontalAlignment = HorizontalAlignment.Center;
+            sp1.Children.Add(cancel);
         }
 
         void Box_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             if (!clicked)
-                e.Cancel = true;
+                canceled = true;
         }
 
         private void input_MouseDown(object sender, MouseEventArgs e)
@@ -145,6 +153,11 @@ namespace HitomiViewer
                 Box.Close();
             }
             clicked = false;
+        }
+        void cancel_Click(object sender, RoutedEventArgs e)
+        {
+            canceled = true;
+            Box.Close();
         }
 
         public string ShowDialog()

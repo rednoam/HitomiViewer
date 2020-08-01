@@ -1,12 +1,12 @@
-﻿<UserControl x:Class="HitomiViewer.HitomiPanel"
+﻿<UserControl x:Class="HitomiViewer.UserControls.LargeHitomiPanel"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:HitomiViewer" xmlns:style="clr-namespace:HitomiViewer.Style"
+             xmlns:local="clr-namespace:HitomiViewer" xmlns:style="clr-namespace:HitomiViewer.UserControls"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    <DockPanel x:Name="panel" HorizontalAlignment="Stretch" Height="100" Margin="5" Background="White">
+    <DockPanel x:Name="panel" HorizontalAlignment="Stretch" Height="150" Margin="5" Background="White">
         <DockPanel.ContextMenu>
             <ContextMenu>
                 <MenuItem x:Name="Favorite" Header="즐겨찾기" Click="Favorite_Click" />
@@ -18,6 +18,7 @@
                 <MenuItem x:Name="Hitomi_Download" Header="다운로드" Click="Hitomi_Download_Click" />
                 <MenuItem x:Name="Encrypt" Header="암호화" Click="Encrypt_Click" />
                 <MenuItem x:Name="Decrypt" Header="복호화" Click="Decrypt_Click" />
+                <MenuItem x:Name="DownloadData" Header="데이터 받기" Click="DownloadData_Click" />
             </ContextMenu>
         </DockPanel.ContextMenu>
         <Border x:Name="border" Background="LightGray" DockPanel.Dock="Left">
@@ -37,7 +38,19 @@
                 <Label x:Name="sizeperpageLabel" VerticalAlignment="Bottom" Foreground="Black" Content="SIZEPERPAGELABEL"/>
                 <Image x:Name="sizeperpageImage" Width="25" Height="25" VerticalAlignment="Bottom" Source="pack://siteoforigin:,,,/Resources/imageicon.png"/>
             </StackPanel>
-            <StackPanel x:Name="tagPanel" DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Stretch" FlowDirection="LeftToRight" Background="White">
+            <StackPanel DockPanel.Dock="Top" Orientation="Vertical">
+                <DockPanel x:Name="authorsPanel">
+                    <Label>작가 :</Label>
+                    <!--
+                    <Label Foreground="Blue" Cursor="Hand" MouseDown="authorLabel_MouseDown" Padding="0, 5, 0, 5">AUTHORLABEL</Label>
+                    <Label Padding="0, 5, 2.5, 5">, </Label>
+                    <Label Foreground="Blue" Cursor="Hand" MouseDown="authorLabel_MouseDown" Padding="0, 5, 0, 5">AUTHORLABEL</Label>
+                    <Label Foreground="Blue" Cursor="Hand" MouseDown="authorLabel_MouseDown">AUTHORLABEL</Label>
+                    <Label x:Name="authorLabel" Foreground="Blue" Cursor="Hand" MouseDown="authorLabel_MouseDown">AUTHORLABEL</Label>
+                    -->
+                </DockPanel>
+            </StackPanel>
+            <StackPanel x:Name="tagPanel" DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Stretch" FlowDirection="LeftToRight">
 
             </StackPanel>
         </DockPanel>

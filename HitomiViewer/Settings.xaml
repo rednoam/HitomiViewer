@@ -17,7 +17,8 @@
             <CheckBox x:Name="AutoEncryption">자동 암호화
                 <CheckBox.ToolTip>(파일 암호화 필요)다운로드시 자동으로 파일을 암호화 시킵니다.</CheckBox.ToolTip>
             </CheckBox>
-            <Button Width="100" Click="Button_Click">저장</Button>
+            <Button Click="Button_Click">저장</Button>
+            <Button Click="ChangePassword_Click">비밀번호 변경</Button>
         </StackPanel>
     </Grid>
 </Window>
