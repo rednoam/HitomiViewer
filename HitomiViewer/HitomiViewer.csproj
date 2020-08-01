@@ -103,6 +103,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Encryption\Base64.cs" />
     <Compile Include="LoginWindow.xaml.cs">
       <DependentUpon>LoginWindow.xaml</DependentUpon>
     </Compile>
@@ -116,6 +117,7 @@
     <Compile Include="Processor\Internet\CheckUpdate.cs" />
     <Compile Include="Scripts\Config.cs" />
     <Compile Include="Scripts\File.cs" />
+    <Compile Include="Scripts\Random.cs" />
     <Compile Include="UserControls\CountBox.cs" />
     <Compile Include="Scripts\FileEncryptDecrypt.cs" />
     <Compile Include="Processor\Internet\Github.cs" />
@@ -124,9 +126,6 @@
     <Compile Include="Encryption\SHA256.cs" />
     <Compile Include="Settings.xaml.cs">
       <DependentUpon>Settings.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="UserControls\LargeHitomiPanel.xaml.cs">
-      <DependentUpon>LargeHitomiPanel.xaml</DependentUpon>
     </Compile>
     <Compile Include="UserControls\HitomiPanel.xaml.cs">
       <DependentUpon>HitomiPanel.xaml</DependentUpon>
@@ -151,10 +150,6 @@
     <Page Include="Settings.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="UserControls\LargeHitomiPanel.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
     </Page>
     <Page Include="UserControls\HitomiPanel.xaml">
       <SubType>Designer</SubType>
@@ -265,9 +260,9 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\NoImage.jpg">
+    <EmbeddedResource Include="Resources\NoImage.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <Resource Include="favicon.ico" />

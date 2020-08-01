@@ -4,6 +4,7 @@ using HitomiViewer.Structs;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Documents;
@@ -39,6 +40,8 @@ namespace HitomiViewer
         public Type type = Type.None;
         public HitomiInfo.Type designType;
         public JToken Json;
+
+        public void Save(string path) => File.WriteAllText(path, JObject.FromObject(this).ToString());
 
         public static Hitomi Copy(Hitomi hitomi)
         {
@@ -120,6 +123,7 @@ namespace HitomiViewer
         public static HitomiInfo Parse(HitomiInfoOrg org)
         {
             HitomiInfo info = new HitomiInfo();
+            info.Title = org.Title;
             info.Author = org.Author;
             info.Number = int.Parse(org.Number);
             {

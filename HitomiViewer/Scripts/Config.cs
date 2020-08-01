@@ -49,6 +49,8 @@ namespace HitomiViewer.Scripts
             Global.Password = StringValue("pw");
             Global.FileEn = BoolValue("fe") ?? false;
             Global.AutoFileEn = BoolValue("autofe") ?? false;
+            Global.EncryptTitle = BoolValue("et") ?? false;
+            Global.RandomTitle = BoolValue("rt") ?? false;
             File.WriteAllText(path, data.ToString());
             return true;
         }

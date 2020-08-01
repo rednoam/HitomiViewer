@@ -1,4 +1,5 @@
-﻿using HitomiViewer.Encryption;
+﻿using ExtensionMethods;
+using HitomiViewer.Encryption;
 using HitomiViewer.Scripts;
 using Newtonsoft.Json.Linq;
 using System;
@@ -32,17 +33,16 @@ namespace HitomiViewer
             FileEncrypt.IsEnabled = false;
             AutoEncryption.IsEnabled = false;
             if (config.GetValue("pw") != null)
-            {
                 Password.IsChecked = true;
-            }
             if (config.GetValue("fe") != null)
-            {
                 FileEncrypt.IsChecked = bool.Parse(config["fe"].ToString());
-            }
             if (config.GetValue("autofe") != null)
-            {
                 AutoEncryption.IsChecked = bool.Parse(config["autofe"].ToString());
-            }
+            if (config.GetValue("et") != null)
+                EncryptTitle.IsChecked = config.BoolValue("et");
+            if (config.GetValue("rt") != null)
+                RandomTitle.IsChecked = config.BoolValue("rt");
+            FolderName.Content = config.StringValue("df");
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -63,7 +63,12 @@ namespace HitomiViewer
             {
                 config.Remove("pw");
             }
+            config["et"] = EncryptTitle.IsChecked ?? false;
+            if (!EncryptTitle.IsChecked ?? false)
+                config["rt"] = RandomTitle.IsChecked ?? false;
+
             cfg.Save(config);
+
             if (config["pw"] == null)
             {
                 Global.MainWindow.Encrypt.Visibility = Visibility.Collapsed;
@@ -77,28 +82,18 @@ namespace HitomiViewer
             Close();
         }
 
-        private void Password_Checked(object sender, RoutedEventArgs e)
-        {
-            FileEncrypt.IsEnabled = true;
-        }
-        private void Password_Unchecked(object sender, RoutedEventArgs e)
-        {
-            FileEncrypt.IsEnabled = false;
-        }
-        private void FileEncrypt_Checked(object sender, RoutedEventArgs e)
-        {
-            AutoEncryption.IsEnabled = true;
-        }
-        private void FileEncrypt_Unchecked(object sender, RoutedEventArgs e)
-        {
-            AutoEncryption.IsEnabled = false;
-        }
-
+        private void Password_Checked(object sender, RoutedEventArgs e) => FileEncrypt.IsEnabled = true;
+        private void Password_Unchecked(object sender, RoutedEventArgs e) => FileEncrypt.IsEnabled = false;
+        private void FileEncrypt_Checked(object sender, RoutedEventArgs e) => AutoEncryption.IsEnabled = true;
+        private void FileEncrypt_Unchecked(object sender, RoutedEventArgs e) => AutoEncryption.IsEnabled = false;
+        private void RandomTitle_Checked(object sender, RoutedEventArgs e) => EncryptTitle.IsEnabled = false;
+        private void RandomTitle_Unchecked(object sender, RoutedEventArgs e) => EncryptTitle.IsEnabled = true;
+        private void EncryptTitle_Checked(object sender, RoutedEventArgs e) => RandomTitle.IsEnabled = false;
+        private void EncryptTitle_Unchecked(object sender, RoutedEventArgs e) => RandomTitle.IsEnabled = true;
         private void Button_Click_1(object sender, RoutedEventArgs e)
         {
 
         }
-
         private void ChangePassword_Click(object sender, RoutedEventArgs e)
         {
             Config cfg = new Config();
@@ -134,6 +129,24 @@ namespace HitomiViewer
                 File.WriteAllBytes(file + ".lock", enc);
             }
             MessageBox.Show("암호화 완료");
+        }
+
+        private void ChangeDownloadFolder_Click(object sender, RoutedEventArgs e)
+        {
+            Config cfg = new Config();
+            JObject config = cfg.Load();
+            config["df"] = new InputBox("다운로드 폴더 설정", "설정", "").ShowDialog();
+            cfg.Save(config);
+            FolderName.Content = config.StringValue("df");
+        }
+
+        private void RandomDownloadFolder_Click(object sender, RoutedEventArgs e)
+        {
+            Config cfg = new Config();
+            JObject config = cfg.Load();
+            config["df"] = Random2.RandomString(int.Parse(new InputBox("랜덤 길이 지정", "설정", "").ShowDialog()));
+            cfg.Save(config);
+            FolderName.Content = config.StringValue("df");
         }
     }
 }

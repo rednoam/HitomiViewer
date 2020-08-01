@@ -15,10 +15,24 @@
                 <CheckBox.ToolTip>(비밀번호 필요)암호화가 되어있는 파일도 보여줍니다.</CheckBox.ToolTip>
             </CheckBox>
             <CheckBox x:Name="AutoEncryption">자동 암호화
-                <CheckBox.ToolTip>(파일 암호화 필요)다운로드시 자동으로 파일을 암호화 시킵니다.</CheckBox.ToolTip>
+                <CheckBox.ToolTip>(파일 암호화 필요)다운로드시 자동으로 파일을 암호화 시킵니다. 오류가 발생할 수 있습니다.</CheckBox.ToolTip>
+            </CheckBox>
+            <CheckBox x:Name="EncryptTitle" Checked="EncryptTitle_Checked" Unchecked="EncryptTitle_Unchecked">타이틀 암호화
+                <CheckBox.ToolTip>다운로드시에 타이틀을 암호화 합니다.(랜덤 타이틀과 중복 불가능)</CheckBox.ToolTip>
+            </CheckBox>
+            <CheckBox x:Name="RandomTitle" Checked="RandomTitle_Checked" Unchecked="RandomTitle_Unchecked">랜덤 타이틀
+                <CheckBox.ToolTip>다운로드시에 타이틀을 랜덤 텍스트로 합니다.(타이틀 암호화와 중복 불가능)</CheckBox.ToolTip>
             </CheckBox>
             <Button Click="Button_Click">저장</Button>
             <Button Click="ChangePassword_Click">비밀번호 변경</Button>
+            <StackPanel Orientation="Horizontal">
+                <Label>현재 폴더 :</Label>
+                <Label x:Name="FolderName"></Label>
+            </StackPanel>
+            <Button Click="ChangeDownloadFolder_Click">다운로드 폴더 이름 변경</Button>
+            <Button Click="RandomDownloadFolder_Click">폴더 이름 변경2
+                <Button.ToolTip>다운로드 폴더 이름을 랜덤으로 지정</Button.ToolTip>
+            </Button>
         </StackPanel>
     </Grid>
 </Window>

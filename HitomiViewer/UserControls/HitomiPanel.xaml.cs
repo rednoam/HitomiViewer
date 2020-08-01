@@ -66,9 +66,6 @@ namespace HitomiViewer.UserControls
                 reader.Show();
             };
 
-            nameLabel.Width = panel.Width - border.Width;
-            nameLabel.Content = h.name;
-
             pageLabel.Content = h.page + "p";
 
             int GB = 1024 * 1024 * 1024;
@@ -130,7 +127,8 @@ namespace HitomiViewer.UserControls
             {
                 JObject jobject = JObject.Parse(File.ReadAllText(System.IO.Path.Combine(h.dir, "info.json")));
                 
-                h.id = jobject["id"].ToString();
+                h.id = jobject.StringValue("id");
+                h.name = jobject.StringValue("name");
                 HitomiInfoOrg hInfoOrg = new HitomiInfoOrg();
                 foreach (JToken tags in jobject["tags"])
                 {
@@ -167,19 +165,16 @@ namespace HitomiViewer.UserControls
                 foreach (string line in lines)
                 {
                     if (line.StartsWith("태그: "))
-                    {
                         hitomiInfoOrg.Tags = line.Remove(0, "태그: ".Length);
-                    }
                     if (line.StartsWith("작가: "))
-                    {
                         hitomiInfoOrg.Author = line.Remove(0, "작가: ".Length);
-                    }
                     if (line.StartsWith("갤러리 넘버: "))
-                    {
                         hitomiInfoOrg.Number = line.Remove(0, "갤러리 넘버: ".Length);
-                    }
+                    if (line.StartsWith("제목: "))
+                        hitomiInfoOrg.Title = line.Remove(0, "제목: ".Length);
                 }
                 hInfo = HitomiInfo.Parse(hitomiInfoOrg);
+                h.name = hInfo.Title;
                 h.id = hInfo.Number.ToString();
                 h.author = hInfo.Author;
                 h.authors = hInfo.Author.Split(new string[] { ", " }, StringSplitOptions.None);
@@ -234,6 +229,8 @@ namespace HitomiViewer.UserControls
                 }
             }
 
+            nameLabel.Width = panel.Width - border.Width;
+            nameLabel.Content = h.name;
             ContextSetup();
         }
 
@@ -350,48 +347,52 @@ namespace HitomiViewer.UserControls
         {
             Task.Factory.StartNew(() =>
             {
-                string filename = h.name.Replace("|", "｜").Replace("?", "？");
-                Directory.CreateDirectory($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}");
-                JObject jobject = JObject.FromObject(h);
-                File.WriteAllText($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/info.json", jobject.ToString());
+                string filename = File2.GetDownloadTitle(File2.SaftyFileName(h.name));
+                if (!Directory.Exists($"{AppDomain.CurrentDomain.BaseDirectory}/{Global.DownloadFolder}"))
+                    Directory.CreateDirectory($"{AppDomain.CurrentDomain.BaseDirectory}/{Global.DownloadFolder}");
+                Directory.CreateDirectory($"{AppDomain.CurrentDomain.BaseDirectory}/{Global.DownloadFolder}/{filename}");
+                h.dir = $"{AppDomain.CurrentDomain.BaseDirectory}/{Global.DownloadFolder}/{filename}";
+                h.Save($"{AppDomain.CurrentDomain.BaseDirectory}/{Global.DownloadFolder}/{filename}/info.json");
                 for (int i = 0; i < h.files.Length; i++)
                 {
                     string file = h.files[i];
                     WebClient wc = new WebClient();
-                    if (!File.Exists($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg"))
+                    if (!File.Exists($"{AppDomain.CurrentDomain.BaseDirectory}/{Global.DownloadFolder}/{filename}/{i}.jpg"))
                     {
                         h.encrypted = Global.AutoFileEn;
                         if (Global.AutoFileEn)
-                            FileEncrypt.DownloadAsync(new Uri(file), $"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg.lock");
+                            FileEncrypt.DownloadAsync(new Uri(file), $"{AppDomain.CurrentDomain.BaseDirectory}/{Global.DownloadFolder}/{filename}/{i}.jpg.lock");
                         else
-                            wc.DownloadFileAsync(new Uri(file), $"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg");
+                            wc.DownloadFileAsync(new Uri(file), $"{AppDomain.CurrentDomain.BaseDirectory}/{Global.DownloadFolder}/{filename}/{i}.jpg");
                     }
                 }
-                Process.Start($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}");
+                Process.Start($"{AppDomain.CurrentDomain.BaseDirectory}/{Global.DownloadFolder}/{filename}");
             });
         }
         private void Hitomi_Download_Click(object sender, RoutedEventArgs e)
         {
             Task.Factory.StartNew(() =>
             {
-                string filename = h.name.Replace("|", "｜");
-                Directory.CreateDirectory($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}");
-                JObject jobject = JObject.FromObject(h);
-                File.WriteAllText($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/info.json", jobject.ToString());
+                string filename = File2.GetDownloadTitle(File2.SaftyFileName(h.name));
+                if (!Directory.Exists($"{AppDomain.CurrentDomain.BaseDirectory}/{Global.DownloadFolder}"))
+                    Directory.CreateDirectory($"{AppDomain.CurrentDomain.BaseDirectory}/{Global.DownloadFolder}");
+                Directory.CreateDirectory($"{AppDomain.CurrentDomain.BaseDirectory}/{Global.DownloadFolder}/{filename}");
+                h.dir = $"{AppDomain.CurrentDomain.BaseDirectory}/{Global.DownloadFolder}/{filename}";
+                h.Save($"{AppDomain.CurrentDomain.BaseDirectory}/{Global.DownloadFolder}/{filename}/info.json");
                 for (int i = 0; i < h.files.Length; i++)
                 {
                     string file = h.files[i];
                     WebClient wc = new WebClient();
                     wc.Headers.Add("referer", "https://hitomi.la/");
-                    if (!File.Exists($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg"))
+                    if (!File.Exists($"{AppDomain.CurrentDomain.BaseDirectory}/{Global.DownloadFolder}/{filename}/{i}.jpg"))
                     {
                         h.encrypted = Global.AutoFileEn;
                         if (Global.AutoFileEn)
-                            FileEncrypt.DownloadAsync(new Uri(file), $"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg.lock");
-                        else wc.DownloadFileAsync(new Uri(file), $"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}/{i}.jpg");
+                            FileEncrypt.DownloadAsync(new Uri(file), $"{AppDomain.CurrentDomain.BaseDirectory}/{Global.DownloadFolder}/{filename}/{i}.jpg.lock");
+                        else wc.DownloadFileAsync(new Uri(file), $"{AppDomain.CurrentDomain.BaseDirectory}/{Global.DownloadFolder}/{filename}/{i}.jpg");
                     }
                 }
-                Process.Start($"{AppDomain.CurrentDomain.BaseDirectory}/hitomi_downloaded/{filename}");
+                Process.Start($"{AppDomain.CurrentDomain.BaseDirectory}/{Global.DownloadFolder}/{filename}");
             });
         }
         private void Folder_Hiyobi_Search_Click(object sender, RoutedEventArgs e)
@@ -608,7 +609,18 @@ namespace HitomiViewer.UserControls
             }
             if (!hiyobi)
             {
-                
+                Hitomi h2 = await new InternetP(index: int.Parse(h.id)).HitomiData2();
+                File.WriteAllText($"{h.dir}/info.json", JObject.FromObject(h2).ToString());
+                for (int i = 0; i < h2.files.Length; i++)
+                {
+                    WebClient wc = new WebClient();
+                    wc.Headers.Add("referer", "https://hitomi.la/");
+                    h.encrypted = Global.AutoFileEn;
+                    if (Global.AutoFileEn)
+                        FileEncrypt.DownloadAsync(new Uri(h2.files[i]), $"{h.dir}/{i}.jpg.lock");
+                    else wc.DownloadFileAsync(new Uri(h2.files[i]), $"{h.dir}/{i}.jpg");
+                }
+                Process.Start(h.dir);
             }
         }
     }

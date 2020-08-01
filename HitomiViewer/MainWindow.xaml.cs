@@ -257,8 +257,9 @@ namespace HitomiViewer
             Page_ItemCount.SelectedIndex = 3;
             SearchMode2.SelectedIndex = 0;
             DelayRegistEvents();
-            if (Global.FileEn)
-                new TaskFactory().StartNew(() => LoadHitomi(path));
+            if (Global.DownloadFolder != "hitomi_downloaded")
+                new TaskFactory().StartNew(() 
+                    => LoadHitomi(File2.GetDirectories(root: "", path, rootDir + Global.DownloadFolder)));
             else
                 new TaskFactory().StartNew(() => LoadHitomi(path));
         }

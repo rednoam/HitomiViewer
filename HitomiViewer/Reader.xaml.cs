@@ -95,7 +95,6 @@ namespace HitomiViewer
                 PreLoad();
                 SetImage(hitomi.files[page]);
             }
-            this.Title = hitomi.name;
             if (e.Key == Key.F11)
             {
                 //Normal
@@ -149,6 +148,10 @@ namespace HitomiViewer
                     }
                     catch { }
                 }
+            }
+            if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.C)
+            {
+                Clipboard.SetImage((BitmapSource)this.image.Source);
             }
         }
 
@@ -212,17 +215,10 @@ namespace HitomiViewer
             //Bitmap test = new Bitmap(link);
             //image.Source = ImageSourceFromBitmap(test);
         }
-
-        private void PreLoad()
-        {
-            return;
-        }
-
         private void Image_MouseDown(object sender, MouseEventArgs e)
         {
             if (e.LeftButton == MouseButtonState.Pressed)
             {
-                //image.Source = new BitmapImage(new Uri("My%20Application;component/error-803716_960_720.png", UriKind.Relative));
                 if (page < hitomi.page - 1)
                 {
                     page++;
@@ -230,7 +226,6 @@ namespace HitomiViewer
             }
             else if (e.RightButton == MouseButtonState.Pressed)
             {
-                //image.Source = new BitmapImage(new Uri("My%20Application;component/error-803716_960_720.png", UriKind.Relative));
                 if (page > 0)
                 {
                     page--;
@@ -241,7 +236,10 @@ namespace HitomiViewer
                 PreLoad();
                 SetImage(hitomi.files[page]);
             }
-            //this.Title = hitomi.name;
+        }
+        private void PreLoad()
+        {
+            return;
         }
 
         private string ImageSourceToString(ImageSource imageSource) {

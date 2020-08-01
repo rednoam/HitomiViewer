@@ -22,10 +22,14 @@ namespace HitomiViewer
         public static Color fontscolor = Colors.Black;
         public static Color outlineclr = Colors.Black;
         public const int Magnif = 4;
+        public const int RandomStringLength = 16;
         public static Config cfg = new Config();
         public static JObject cfgob = cfg.Load();
         public static string Password = cfg.StringValue("pw");
+        public static string DownloadFolder = cfg.StringValue("df") == null ? "hitomi_downloaded" : cfg.StringValue("df");
         public static bool FileEn = cfg.BoolValue("fe") ?? false;
         public static bool AutoFileEn = cfg.BoolValue("autofe") ?? false;
+        public static bool EncryptTitle = cfg.BoolValue("et") ?? false;
+        public static bool RandomTitle = cfg.BoolValue("rt") ?? false;
     }
 }
