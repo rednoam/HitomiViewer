@@ -193,7 +193,7 @@ namespace HitomiViewer
                 && ((uriResult.Scheme == Uri.UriSchemeHttp) || (uriResult.Scheme == Uri.UriSchemeHttps));
             image.Source = new BitmapImage(new Uri("/Resources/loading2.png", UriKind.Relative));
             int copypage = page;
-            if (hitomi.images == null)
+            if (hitomi.images == null || hitomi.images.Length < hitomi.page)
                 hitomi.images = new BitmapImage[hitomi.page];
             if (hitomi.images[copypage] == null)
             {

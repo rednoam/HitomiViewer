@@ -45,13 +45,18 @@ namespace HitomiViewer.UserControls
             this.thumb = h.thumb;
             this.MainWindow = sender;
             InitializeComponent();
-            InitEvent();
             Init();
+            InitEvent();
         }
 
         private void InitEvent()
         {
-            
+            thumbNail.MouseDown += (object sender, MouseButtonEventArgs e) =>
+            {
+                Reader reader = new Reader(h);
+                if (!reader.IsClosed)
+                    reader.Show();
+            };
         }
         private void Init()
         {
@@ -60,13 +65,6 @@ namespace HitomiViewer.UserControls
             thumbNail.Source = h.thumb;
             thumbBrush.ImageSource = h.thumb;
             thumbNail.ToolTip = GetToolTip(panel.Height);
-
-            thumbNail.MouseDown += (object sender, MouseButtonEventArgs e) =>
-            {
-                Reader reader = new Reader(h);
-                if (!reader.IsClosed)
-                    reader.Show();
-            };
 
             authorsPanel.Children.Clear();
             authorsPanel.Children.Add(new Label { Content = "작가 :" });
