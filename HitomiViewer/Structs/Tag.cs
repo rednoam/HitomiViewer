@@ -25,7 +25,7 @@ namespace HitomiViewer.Structs
             {
                 Types type;
                 bool err = Enum.TryParse<Types> (value.Split(':')[0], out type);
-                if (!err)
+                if (err)
                     return type;
                 else
                 {

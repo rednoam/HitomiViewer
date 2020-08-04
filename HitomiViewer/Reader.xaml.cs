@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -54,6 +55,7 @@ namespace HitomiViewer
         void Init()
         {
             this.window.Readers.Add(this);
+            this.Loaded += (object sender, RoutedEventArgs e) => this.Focus();
             this.Closing += (object sender, System.ComponentModel.CancelEventArgs e) =>
             {
                 window.Readers.Remove(this);
@@ -69,7 +71,7 @@ namespace HitomiViewer
             }
             new TaskFactory().StartNew(() => {
                 while (hitomi.files == null || hitomi.files.Length <= 0) { }
-                if (hitomi.thumb == null) this.image.Source = ImageSourceLoad(hitomi.files[0]);
+                if (hitomi.thumb == null) this.image.Source = ImageProcessor.ProcessEncrypt(hitomi.files[0]);
                 System.Threading.Thread.Sleep(100);
                 this.Activate();
                 this.WindowStyle = WindowStyle.None;
@@ -277,112 +279,6 @@ namespace HitomiViewer
             {
                 return ImageSourceFromBitmap(bmp);
             }
-        }
-
-        private BitmapImage LoadWebImage(string url)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(url))
-                    return null;
-                System.Net.WebClient wc = new System.Net.WebClient();
-                Byte[] MyData = wc.DownloadData(url);
-                wc.Dispose();
-                BitmapImage bimgTemp = new BitmapImage();
-                bimgTemp.BeginInit();
-                bimgTemp.StreamSource = new MemoryStream(MyData);
-                bimgTemp.EndInit();
-                return bimgTemp;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-        private async Task<BitmapImage> LoadWebImageAsync(string url)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(url))
-                    return null;
-                System.Net.WebClient wc = new System.Net.WebClient();
-                Byte[] MyData = await wc.DownloadDataTaskAsync(url);
-                wc.Dispose();
-                BitmapImage bimgTemp = new BitmapImage();
-                bimgTemp.BeginInit();
-                bimgTemp.StreamSource = new MemoryStream(MyData);
-                bimgTemp.EndInit();
-                return bimgTemp;
-            }
-            catch (Exception ex)
-            {
-                return null;
-            }
-        }
-        private void LoadWebImage(string url, Action<BitmapImage> callback)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(url))
-                    callback(null);
-                System.Net.WebClient wc = new System.Net.WebClient();
-                wc.DownloadDataAsync(new Uri(url));
-                wc.DownloadDataCompleted += (object sender, System.Net.DownloadDataCompletedEventArgs e) =>
-                {
-                    Byte[] MyData = e.Result;
-                    wc.Dispose();
-                    BitmapImage bimgTemp = new BitmapImage();
-                    bimgTemp.BeginInit();
-                    bimgTemp.StreamSource = new MemoryStream(MyData);
-                    bimgTemp.EndInit();
-                    callback(bimgTemp);
-                };
-            }
-            catch
-            {
-                callback(null);
-            }
-        }
-        private async Task<BitmapImage> LoadWebP(string url)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(url))
-                    return null;
-                System.Net.WebClient wc = new System.Net.WebClient();
-                wc.Headers.Add("Referer", "https://hitomi.la/");
-                Byte[] MyData = await wc.DownloadDataTaskAsync(url);
-                wc.Dispose();
-                WebP webP = new WebP();
-                Bitmap bitmap = webP.Decode(MyData);
-                MemoryStream ms = new MemoryStream();
-                bitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Bmp);
-                var bi = new BitmapImage();
-                bi.BeginInit();
-                bi.StreamSource = ms;
-                bi.CacheOption = BitmapCacheOption.OnLoad;
-                bi.EndInit();
-                return bi;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-        private ImageSource ImageSourceLoad(string path, int pause = 0)
-        {
-            Console.WriteLine("{0}\n{1}", path, pause);
-            BitmapImage img = new BitmapImage();
-            img.BeginInit();
-            img.CacheOption = BitmapCacheOption.OnLoad;
-            img.UriSource = new Uri(path);
-            img.EndInit();
-
-            System.Threading.Thread.Sleep(pause);
-
-            if (img.PixelWidth == 1 && img.PixelHeight == 1) return ImageSourceLoad(path, pause + 500);
-
-            return img;
         }
     }
 }
