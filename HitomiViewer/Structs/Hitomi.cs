@@ -41,6 +41,7 @@ namespace HitomiViewer
         public HitomiInfo.Type designType;
         public JToken Json;
 
+        public void AutoAuthor() => author = string.Join(", ", authors);
         public void Save(string path) => File.WriteAllText(path, JObject.FromObject(this).ToString());
 
         public static Hitomi Copy(Hitomi hitomi)
@@ -115,6 +116,9 @@ namespace HitomiViewer
         public string path { get; set; }
         public string hash { get; set; }
         public string name { get; set; }
+        public string url { get; set; }
+        public int height { get; set; }
+        public int width { get; set; }
         public bool hasavif { get; set; }
         public bool haswebp { get; set; }
     }

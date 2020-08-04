@@ -47,10 +47,12 @@ namespace HitomiViewer.Scripts
             Global.cfg = this;
             Global.cfgob = data;
             Global.Password = StringValue("pw");
+            Global.DownloadFolder = StringValue("df") ?? "hitomi_downloaded";
             Global.FileEn = BoolValue("fe") ?? false;
             Global.AutoFileEn = BoolValue("autofe") ?? false;
             Global.EncryptTitle = BoolValue("et") ?? false;
             Global.RandomTitle = BoolValue("rt") ?? false;
+            if (Global.DownloadFolder == "") Global.DownloadFolder = "hitomi_downloaded";
             File.WriteAllText(path, data.ToString());
             return true;
         }

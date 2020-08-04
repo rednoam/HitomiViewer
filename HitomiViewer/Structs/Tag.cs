@@ -1,4 +1,6 @@
-﻿namespace HitomiViewer.Structs
+﻿using System;
+
+namespace HitomiViewer.Structs
 {
     public class Tag
     {
@@ -10,6 +12,14 @@
             male,
             tag,
             type
+        }
+
+        public static Types ParseTypes(string value)
+        {
+            if (value.Contains(":"))
+                return (Types)Enum.Parse(typeof(Tag.Types), value.Split(':')[0]);
+            else
+                return Types.tag;
         }
     }
 }

@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:HitomiViewer" xmlns:style="clr-namespace:HitomiViewer.UserControls"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="450" d:DesignWidth="800" Loaded="HitomiPanel_Loaded">
     <DockPanel x:Name="panel" HorizontalAlignment="Stretch" Height="100" Margin="5" Background="White">
         <DockPanel.ContextMenu>
             <ContextMenu>
@@ -13,6 +13,7 @@
                 <MenuItem x:Name="FavoriteRemove" Header="즐겨찾기 삭제" Click="FavoriteRemove_Click" />
                 <MenuItem x:Name="Folder_Remove" Header="삭제" Click="Folder_Remove_Click" />
                 <MenuItem x:Name="Folder_Open" Header="열기" Click="Folder_Open_Click" />
+                <MenuItem x:Name="CopyNumber" Header="번호 복사" Click="CopyNumber_Click" />
                 <MenuItem x:Name="Folder_Hiyobi_Search" Header="검색" Click="Folder_Hiyobi_Search_Click" />
                 <MenuItem x:Name="Hiyobi_Download" Header="다운로드" Click="Hiyobi_Download_Click" />
                 <MenuItem x:Name="Hitomi_Download" Header="다운로드" Click="Hitomi_Download_Click" />
@@ -24,6 +25,9 @@
         </DockPanel.ContextMenu>
         <Border x:Name="border" Background="LightGray" DockPanel.Dock="Left">
             <Image x:Name="thumbNail" VerticalAlignment="Stretch" Width="100">
+                <Image.BitmapEffect>
+                    <BlurBitmapEffect Radius="5" KernelType="Gaussian" />
+                </Image.BitmapEffect>
                 <Image.OpacityMask>
                     <ImageBrush x:Name="thumbBrush"/>
                 </Image.OpacityMask>

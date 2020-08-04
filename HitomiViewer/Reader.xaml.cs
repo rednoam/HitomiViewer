@@ -29,16 +29,22 @@ namespace HitomiViewer
         private Hitomi hitomi;
         private MainWindow window;
         private int page;
+        public bool IsClosed { get; private set; }
 
         protected override void OnSourceInitialized(EventArgs e)
         {
             //IconHelper.RemoveIcon(this);
         }
+        protected override void OnClosed(EventArgs e)
+        {
+            base.OnClosed(e);
+            IsClosed = true;
+        }
 
         public Reader(Hitomi hitomi)
         {
             this.Background = new SolidColorBrush(Global.background);
-            this.hitomi = hitomi.Copy();
+            this.hitomi = hitomi;
             this.window = Global.MainWindow;
             this.page = 0;
             InitializeComponent();
@@ -54,18 +60,20 @@ namespace HitomiViewer
                 hitomi.images = new BitmapImage[] { };
             };
             this.image.Source = hitomi.thumb;
+            this.Title = hitomi.name;
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
-            if (this.hitomi.files == null)
-                this.hitomi.files = Directory.GetFiles(this.hitomi.dir).Where(file => allowedExtensions.Any(file.ToLower().EndsWith)).ToArray().ESort().ToArray();
-            if (hitomi.thumb == null) this.image.Source = ImageSourceLoad(hitomi.files[0]);
+            if (hitomi.files == null || hitomi.files.Length <= 0)
+            {
+                MessageBox.Show("이미지를 불러올 수 없습니다.");
+                Close();
+            }
             new TaskFactory().StartNew(() => {
+                while (hitomi.files == null || hitomi.files.Length <= 0) { }
+                if (hitomi.thumb == null) this.image.Source = ImageSourceLoad(hitomi.files[0]);
                 System.Threading.Thread.Sleep(100);
-                Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate
-                {
-                    this.Activate();
-                    this.WindowStyle = WindowStyle.None;
-                    this.WindowState = WindowState.Maximized;
-                }));
+                this.Activate();
+                this.WindowStyle = WindowStyle.None;
+                this.WindowState = WindowState.Maximized;
             });
         }
 
@@ -132,6 +140,7 @@ namespace HitomiViewer
                 if (result) {
                     try
                     {
+                        this.Title = hitomi.name + " 0/" + (hitomi.files.Length - 1);
                         for (int i = 0; i < hitomi.files.Length; i++)
                         {
                             this.Title = hitomi.name + " " + i + "/" + (hitomi.files.Length - 1);
@@ -234,7 +243,10 @@ namespace HitomiViewer
             if (e.RightButton == MouseButtonState.Pressed || e.LeftButton == MouseButtonState.Pressed)
             {
                 PreLoad();
-                SetImage(hitomi.files[page]);
+                if (hitomi.files == null || hitomi.files.Length <= 0)
+                    SetImage(new Uri("/Resources/loading2.png", UriKind.Relative));
+                else
+                    SetImage(hitomi.files[page]);
             }
         }
         private void PreLoad()

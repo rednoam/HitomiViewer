@@ -44,6 +44,20 @@ namespace HitomiViewer.Scripts.Loaders
             };
             this.end = () => Global.MainWindow.label.Visibility = System.Windows.Visibility.Collapsed;
         }
+        public void FastDefault()
+        {
+            this.start = (int count) =>
+            {
+                Global.MainWindow.label.Content = "0/" + count;
+                Global.MainWindow.label.Visibility = System.Windows.Visibility.Visible;
+            };
+            this.update = (Hitomi h, int index, int max) =>
+            {
+                Global.MainWindow.label.Content = $"{index}/{max}";
+                Global.MainWindow.MainPanel.Children.Add(new UserControls.HitomiPanel(h, Global.MainWindow, true, true));
+            };
+            this.end = () => Global.MainWindow.label.Visibility = System.Windows.Visibility.Collapsed;
+        }
 
         public async void Parser(JObject jobject)
         {
@@ -80,6 +94,18 @@ namespace HitomiViewer.Scripts.Loaders
                 update(h,
                     jobject["list"].ToList().IndexOf(tk),
                     jobject["list"].Count());
+            }
+            end();
+        }
+        public async void FastParser(JObject jobject)
+        {
+            start(jobject["list"].Count());
+            JArray arr = jobject["list"] as JArray;
+            for (int i = 0; i < arr.Count; i++)
+            {
+                Hitomi h = new InternetP().HiyobiParse(arr[i]);
+                h.type = Hitomi.Type.Hiyobi;
+                update(h, i, arr.Count);
             }
             end();
         }

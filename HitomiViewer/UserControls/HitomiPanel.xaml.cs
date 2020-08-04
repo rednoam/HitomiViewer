@@ -36,9 +36,11 @@ namespace HitomiViewer.UserControls
         private MainWindow MainWindow;
         private Hitomi.Type ftype = Hitomi.Type.Folder;
         private bool large;
-        public HitomiPanel(Hitomi h, MainWindow sender, bool large = false)
+        private bool afterLoad;
+        public HitomiPanel(Hitomi h, MainWindow sender, bool large = false, bool afterLoad = false)
         {
             this.large = large;
+            this.afterLoad = afterLoad;
             this.h = h;
             this.thumb = h.thumb;
             this.MainWindow = sender;
@@ -51,7 +53,6 @@ namespace HitomiViewer.UserControls
         {
             
         }
-
         private void Init()
         {
             if (h.thumb == null)
@@ -63,8 +64,13 @@ namespace HitomiViewer.UserControls
             thumbNail.MouseDown += (object sender, MouseButtonEventArgs e) =>
             {
                 Reader reader = new Reader(h);
-                reader.Show();
+                if (!reader.IsClosed)
+                    reader.Show();
             };
+
+            authorsPanel.Children.Clear();
+            authorsPanel.Children.Add(new Label { Content = "작가 :" });
+            tagPanel.Children.Clear();
 
             pageLabel.Content = h.page + "p";
 
@@ -334,6 +340,25 @@ namespace HitomiViewer.UserControls
             tagPanel.Background = new SolidColorBrush(Global.Menuground);
         }
 
+        private async void HitomiPanel_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (!afterLoad) return;
+            if (h.type == Hitomi.Type.Hiyobi)
+            {
+                this.nameLabel.Content = h.name + " (로딩중)";
+                h.files = new string[0];
+                InternetP parser = new InternetP(index: int.Parse(h.id));
+                this.h.files = (await parser.HiyobiFiles()).Select(x => x.url).ToArray();
+                this.h.page = h.files.Length;
+                this.nameLabel.Content = h.name;
+                Init();
+            }
+            if (h.type == Hitomi.Type.Hitomi)
+            {
+
+            }
+        }
+
         private void Folder_Remove_Click(object sender, RoutedEventArgs e)
         {
             Global.MainWindow.MainPanel.Children.Remove(this);
@@ -343,6 +368,7 @@ namespace HitomiViewer.UserControls
         {
             System.Diagnostics.Process.Start(h.dir);
         }
+        private void CopyNumber_Click(object sender, RoutedEventArgs e) => Clipboard.SetText(h.id);
         private void Hiyobi_Download_Click(object sender, RoutedEventArgs e)
         {
             Task.Factory.StartNew(() =>
@@ -541,7 +567,7 @@ namespace HitomiViewer.UserControls
         {
             bool hiyobi = ftype == Hitomi.Type.Hiyobi;
             if (ftype == Hitomi.Type.Folder)
-            {
+            {   
                 bool result = await new InternetP(index: int.Parse(h.id)).isHiyobi();
                 hiyobi = result;
             }
@@ -553,7 +579,11 @@ namespace HitomiViewer.UserControls
                     MessageBox.Show("데이터를 받아오는데 실패했습니다.");
                     return;
                 }
-                File.WriteAllText(Path.Combine(h.dir, "info.json"), JObject.FromObject(h2).ToString());
+                string folder = h.dir;
+                if (h.type != Hitomi.Type.Folder)
+                    folder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Global.DownloadFolder, File2.GetDownloadTitle(File2.SaftyFileName(h2.name)));
+                if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+                File.WriteAllText(Path.Combine(folder, "info.json"), JObject.FromObject(h2).ToString());
                 MessageBox.Show("데이터를 성공적으로 받았습니다.");
                 authorsPanel.Children.Clear();
                 authorsPanel.Children.Add(new Label { Content = "작가 :" });
@@ -565,7 +595,11 @@ namespace HitomiViewer.UserControls
                 InternetP parser = new InternetP();
                 parser.index = int.Parse(h.id);
                 Hitomi h2 = await parser.HitomiData2();
-                File.WriteAllText(Path.Combine(h.dir, "info.json"), JObject.FromObject(h2).ToString());
+                string folder = h.dir;
+                if (h.type != Hitomi.Type.Folder)
+                    folder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Global.DownloadFolder, File2.GetDownloadTitle(File2.SaftyFileName(h2.name)));
+                if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+                File.WriteAllText(Path.Combine(folder, "info.json"), JObject.FromObject(h2).ToString());
                 MessageBox.Show("데이터를 성공적으로 받았습니다.");
                 authorsPanel.Children.Clear();
                 authorsPanel.Children.Add(new Label { Content = "작가 :" });
@@ -581,47 +615,39 @@ namespace HitomiViewer.UserControls
                 bool result = await new InternetP(index: int.Parse(h.id)).isHiyobi();
                 hiyobi = result;
             }
+            Hitomi h2 = null;
             if (hiyobi)
-            {
-                Hitomi h2 = await new HiyobiLoader(text: h.id).Parser();
-                File.WriteAllText(Path.Combine(h.dir, "info.json"), JObject.FromObject(h2).ToString());
-                string filename = h2.name.Replace("|", "｜").Replace("?", "？");
-                foreach (string file in Directory.GetFiles(h.dir))
-                {
-                    if (file.EndsWith(".lock") || file.EndsWith(".jpg"))
-                        File.Delete(file);
-                }
-                for (int i = 0; i < h2.files.Length; i++)
-                {
-                    string file = h2.files[i];
-                    WebClient wc = new WebClient();
-                    h.encrypted = Global.AutoFileEn;
-                    if (Global.AutoFileEn)
-                        FileEncrypt.DownloadAsync(new Uri(file), $"{h.dir}/{i}.jpg.lock");
-                    else
-                        wc.DownloadFileAsync(new Uri(file), $"{h.dir}/{i}.jpg");
-                }
-                Process.Start(h.dir);
-                authorsPanel.Children.Clear();
-                authorsPanel.Children.Add(new Label { Content = "작가 :" });
-                tagPanel.Children.Clear();
-                Init();
-            }
+                h2 = await new HiyobiLoader(text: h.id).Parser();
             if (!hiyobi)
+                h2 = await new InternetP(index: int.Parse(h.id)).HitomiData2();
+            if (h2 == null) return;
+            string folder = h.type == Hitomi.Type.Folder ? h.dir : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Global.DownloadFolder, File2.GetDownloadTitle(File2.SaftyFileName(h2.name)));
+            if (!Directory.Exists(folder)) Directory.CreateDirectory(folder); h = h2;
+            File.WriteAllText(Path.Combine(folder, "info.json"), JObject.FromObject(h2).ToString());
+            foreach (string file in Directory.GetFiles(folder))
             {
-                Hitomi h2 = await new InternetP(index: int.Parse(h.id)).HitomiData2();
-                File.WriteAllText($"{h.dir}/info.json", JObject.FromObject(h2).ToString());
-                for (int i = 0; i < h2.files.Length; i++)
-                {
-                    WebClient wc = new WebClient();
-                    wc.Headers.Add("referer", "https://hitomi.la/");
-                    h.encrypted = Global.AutoFileEn;
-                    if (Global.AutoFileEn)
-                        FileEncrypt.DownloadAsync(new Uri(h2.files[i]), $"{h.dir}/{i}.jpg.lock");
-                    else wc.DownloadFileAsync(new Uri(h2.files[i]), $"{h.dir}/{i}.jpg");
-                }
-                Process.Start(h.dir);
+                if (file.EndsWith(".lock") || file.EndsWith(".jpg"))
+                    File.Delete(file);
             }
+            for (int i = 0; i < h2.files.Length; i++)
+            {
+                string file = h2.files[i];
+                WebClient wc = new WebClient();
+                if (!hiyobi) wc.Headers.Add("referer", "https://hitomi.la/");
+                h.encrypted = Global.AutoFileEn;
+                if (Global.AutoFileEn)
+                    FileEncrypt.DownloadAsync(new Uri(file), $"{folder}/{i}.jpg.lock");
+                else
+                    wc.DownloadFileAsync(new Uri(file), $"{folder}/{i}.jpg");
+                if (i == 0) wc.DownloadFileCompleted += ImageDownloadCompleted;
+            }
+            Process.Start(folder);
+        }
+        private async void ImageDownloadCompleted(object sender, System.ComponentModel.AsyncCompletedEventArgs e)
+        {
+            h.thumbpath = h.files.First();
+            h.thumb = await ImageProcessor.ProcessEncryptAsync(h.thumbpath);
+            Init();
         }
     }
 }

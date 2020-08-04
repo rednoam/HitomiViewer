@@ -85,12 +85,10 @@ namespace HitomiViewer
                 Decrypt.Visibility = Visibility.Collapsed;
             }
         }
-
         private void InitEvents()
         {
             this.Loaded += MainWindow_Loaded;
         }
-
         private void DelayRegistEvents()
         {
             SearchMode1.SelectionChanged += SearchMode1_SelectionChanged;
@@ -126,7 +124,6 @@ namespace HitomiViewer
                 Console.WriteLine("{0}: {1}", i, folder);
                 var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".lock" };
                 string[] innerFiles = Directory.GetFiles(folder).Where(file => allowedExtensions.Any(file.ToLower().EndsWith)).ToArray().ESort();
-                if (innerFiles.Length <= 0) continue;
                 Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                 {
                     Hitomi h = new Hitomi
@@ -135,23 +132,39 @@ namespace HitomiViewer
                         dir = folder,
                         page = innerFiles.Length,
                         files = innerFiles,
-                        thumb = ImageProcessor.ProcessEncrypt(innerFiles.First()),
-                        thumbpath = innerFiles.First(),
                         type = Hitomi.Type.Folder,
                         FolderByte = File2.GetFolderByte(folder),
                         SizePerPage = File2.GetSizePerPage(folder)
                     };
+                    if (innerFiles.Length <= 0)
+                    {
+                        h.thumb = ImageProcessor.FromResource("NoImage.jpg");
+                        h.thumbpath = "";
+                    }
+                    else
+                    {
+                        h.thumb = ImageProcessor.ProcessEncrypt(innerFiles.First());
+                        h.thumbpath = innerFiles.First();
+                    }
                     if (h.thumb == null) return;
                     label.FontSize = 100;
                     label.Content = i + "/" + Page_itemCount;
                     MainPanel.Children.Add(new HitomiPanel(h, this, true));
-                    Console.WriteLine("Completed: {0}", innerFiles.First());
+                    Console.WriteLine("Completed: {0}", folder);
                 }));
             }
             Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => label.Visibility = Visibility.Hidden));
         }
 
         public int GetPage() => (int) new CountBox("페이지", "원하는 페이지 수", 1).ShowDialog();
+        public void LabelSetup()
+        {
+            label.FlowDirection = FlowDirection.RightToLeft;
+            label.Visibility = Visibility.Visible;
+            label.FontSize = 100;
+            label.Content = "로딩중";
+            label.Margin = new Thickness(352 - label.Content.ToString().Length * 11, 240, 0, 0);
+        }
 
         private void SetColor()
         {
@@ -238,11 +251,7 @@ namespace HitomiViewer
         }
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            label.FlowDirection = FlowDirection.RightToLeft;
-            label.FontSize = 100;
-            label.Content = "로딩중";
-            label.Margin = new Thickness(352 - label.Content.ToString().Length * 11, 240, 0, 0);
-            label.Visibility = Visibility.Visible;
+            LabelSetup();
             this.Background = new SolidColorBrush(Global.background);
             MainPanel.Children.Clear();
             if (!Directory.Exists(path))
@@ -340,15 +349,6 @@ namespace HitomiViewer
                     this.WindowState = WindowState.Normal;
                 }
             }
-            else if (e.Key == Key.R)
-            {
-                label.FontSize = 100;
-                label.Content = "로딩중";
-                label.Visibility = Visibility.Visible;
-                this.Background = new SolidColorBrush(Global.background);
-                MainPanel.Children.Clear();
-                new TaskFactory().StartNew(() => LoadHitomi(path));
-            }
         }
         private void SearchMode1_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -392,7 +392,11 @@ namespace HitomiViewer
         }
         private void LoadBtn_Click(object sender, RoutedEventArgs e)
         {
-            new TaskFactory().StartNew(() => LoadHitomi(path));
+            if (Global.DownloadFolder != "hitomi_downloaded")
+                new TaskFactory().StartNew(()
+                    => LoadHitomi(File2.GetDirectories(root: "", path, rootDir + Global.DownloadFolder)));
+            else
+                new TaskFactory().StartNew(() => LoadHitomi(path));
         }
         private void Search_Button_Click(object sender, RoutedEventArgs e)
         {
@@ -412,12 +416,11 @@ namespace HitomiViewer
         private void MenuHiyobi_Click(object sender, RoutedEventArgs e)
         {
             MainPanel.Children.Clear();
-            label.Visibility = Visibility.Visible;
-            label.FontSize = 100;
+            LabelSetup();
             InternetP parser = new InternetP(url: "https://api.hiyobi.me/list/" + GetPage());
             HiyobiLoader hiyobi = new HiyobiLoader();
-            hiyobi.Default();
-            parser.LoadJObject(hiyobi.Parser);
+            hiyobi.FastDefault();
+            parser.LoadJObject(hiyobi.FastParser);
         }
         private void Hiyobi_Search_Text_KeyDown(object sender, KeyEventArgs e)
         {
@@ -426,18 +429,16 @@ namespace HitomiViewer
         public void Hiyobi_Search_Button_Click(object sender, RoutedEventArgs e)
         {
             MainPanel.Children.Clear();
-            label.Visibility = Visibility.Visible;
-            label.FontSize = 100;
+            LabelSetup();
             InternetP parser = new InternetP(keyword: Hiyobi_Search_Text.Text.Split(' ').ToList(), index: 1);
             HiyobiLoader hiyobi = new HiyobiLoader();
-            hiyobi.Default();
-            parser.HiyobiSearch(data => new InternetP(data: data).ParseJObject(hiyobi.Parser));
+            hiyobi.FastDefault();
+            parser.HiyobiSearch(data => new InternetP(data: data).ParseJObject(hiyobi.FastParser));
         }
         private void MenuHitomi_Click(object sender, RoutedEventArgs e)
         {
             MainPanel.Children.Clear();
-            label.Visibility = Visibility.Visible;
-            label.FontSize = 100;
+            LabelSetup();
             HitomiLoader hitomi = new HitomiLoader();
             hitomi.index = GetPage();
             hitomi.count = (int)Page_itemCount;
@@ -478,7 +479,7 @@ namespace HitomiViewer
         }
         private void Encrypt_Click(object sender, RoutedEventArgs e)
         {
-            foreach (string item in Directory.GetDirectories(path))
+            foreach (string item in File2.GetDirectories(root: "", path, rootDir + Global.DownloadFolder))
             {
                 if (File.Exists($"{item}/info.json"))
                 {
@@ -502,7 +503,7 @@ namespace HitomiViewer
         }
         private void Decrypt_Click(object sender, RoutedEventArgs e)
         {
-            foreach (string item in Directory.GetDirectories(path))
+            foreach (string item in File2.GetDirectories(root: "", path, rootDir + Global.DownloadFolder))
             {
                 if (File.Exists($"{path}/info.json"))
                 {

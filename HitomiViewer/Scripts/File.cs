@@ -51,7 +51,8 @@ namespace HitomiViewer.Scripts
             List<string> items = new List<string>();
             foreach (string dir in dirs)
             {
-                items = items.Concat(Directory.GetDirectories(root + dir)).ToList();
+                if (Directory.Exists(dir))
+                    items = items.Concat(Directory.GetDirectories(root + dir)).ToList();
             }
             return items.ToArray();
         }

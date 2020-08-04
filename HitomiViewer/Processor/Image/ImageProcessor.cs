@@ -247,6 +247,10 @@ namespace HitomiViewer.Scripts
             Uri oUri = new Uri($"pack://siteoforigin:,,,/Resources/{psResourceName}");
             return new BitmapImage(oUri);
         }
+        public static string UrlFromResource(string psResourceName)
+        {
+            return $"pack://siteoforigin:,,,/Resources/{psResourceName}";
+        }
         public static BitmapImage FromResourceWithName(string psAssemblyName, string psResourceName)
         {
             Uri oUri = new Uri("pack://application:,,,/" + psAssemblyName + ";component/" + psResourceName, UriKind.RelativeOrAbsolute);

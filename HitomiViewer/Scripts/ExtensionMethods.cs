@@ -131,6 +131,7 @@ namespace ExtensionMethods
                 && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
             return result;
         }
+
         public static string StringValue(this JObject config, string path)
         {
             if (config == null) return null;
@@ -165,5 +166,42 @@ namespace ExtensionMethods
             if (!config.ContainsKey(path)) return new List<T>();
             return config[path].ToObject<List<T>>();
         }
+
+        public static string StringValue(this JToken config, string path)
+        {
+            if (config == null) return null;
+            if (config[path] == null) return null;
+            return config[path].ToString();
+        }
+        public static int? IntValue(this JToken config, string path)
+        {
+            int res;
+            if (config == null) return null;
+            if (config[path] == null) return null;
+            if (int.TryParse(config[path].ToString(), out res)) return null;
+            return res;
+        }
+        public static double? DoubleValue(this JToken config, string path)
+        {
+            double res;
+            if (config == null) return null;
+            if (config[path] == null) return null;
+            if (double.TryParse(config[path].ToString(), out res)) return null;
+            return res;
+        }
+        public static bool? BoolValue(this JToken config, string path)
+        {
+            if (config == null) return null;
+            if (config[path] == null) return null;
+            return bool.Parse(config[path].ToString());
+        }
+        public static IList<T> ArrayValue<T>(this JToken config, string path) where T : class
+        {
+            if (config == null) return new List<T>();
+            if (config[path] == null) return new List<T>();
+            return config[path].ToObject<List<T>>();
+        }
+        public static async void TaskCallback<T>(this Task<T> Task, Action<T> callback) where T : class => callback(await Task);
+        public static bool ToBool(this int i) => Convert.ToBoolean(i);
     }
 }
