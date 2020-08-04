@@ -19,6 +19,7 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
@@ -37,10 +38,12 @@ namespace HitomiViewer.UserControls
         private Hitomi.Type ftype = Hitomi.Type.Folder;
         private bool large;
         private bool afterLoad;
-        public HitomiPanel(Hitomi h, MainWindow sender, bool large = false, bool afterLoad = false)
+        private bool blur;
+        public HitomiPanel(Hitomi h, MainWindow sender, bool large = false, bool afterLoad = false, bool blur = false)
         {
             this.large = large;
             this.afterLoad = afterLoad;
+            this.blur = blur;
             this.h = h;
             this.thumb = h.thumb;
             this.MainWindow = sender;
@@ -69,6 +72,22 @@ namespace HitomiViewer.UserControls
             authorsPanel.Children.Clear();
             authorsPanel.Children.Add(new Label { Content = "작가 :" });
             tagPanel.Children.Clear();
+#pragma warning disable CS0618 // 형식 또는 멤버는 사용되지 않습니다.
+            if (blur)
+                thumbNail.BitmapEffect = new BlurBitmapEffect { Radius = 5, KernelType = KernelType.Gaussian };
+            Config config = new Config();
+            config.Load();
+            if (config.ArrayValue<string>(Settings.except_tags).Any(x => h.tags.Select(y => y.name).Contains(x)))
+            {
+                if (config.BoolValue(Settings.block_tags) ?? false)
+                {
+                    MainWindow.MainPanel.Children.Remove(this);
+                    return;
+                }
+                else
+                    thumbNail.BitmapEffect = new BlurBitmapEffect { Radius = 5, KernelType = KernelType.Gaussian };
+            }
+#pragma warning restore CS0618 // 형식 또는 멤버는 사용되지 않습니다.
 
             pageLabel.Content = h.page + "p";
 

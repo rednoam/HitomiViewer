@@ -105,7 +105,10 @@ namespace HitomiViewer.Scripts.Loaders
             {
                 Hitomi h = new InternetP().HiyobiParse(arr[i]);
                 h.type = Hitomi.Type.Hiyobi;
-                update(h, i, arr.Count);
+                Config config = new Config();
+                config.Load();
+                if (!config.ArrayValue<string>(Settings.except_tags).Any(x => h.tags.Select(y => y.name).Contains(x)) || !(config.BoolValue(Settings.block_tags) ?? false))
+                    update(h, i, arr.Count);
             }
             end();
         }

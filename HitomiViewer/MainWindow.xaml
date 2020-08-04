@@ -3,10 +3,17 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:wpf="http://wpfcontrols.com/"
         xmlns:local="clr-namespace:HitomiViewer"
+        xmlns:autocomplete="clr-namespace:HitomiViewer.AutoComplete"
         xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800" KeyDown="MainWindow_KeyDown">
+    <Window.Resources>
+        <autocomplete:SuggestionProvider x:Key="fsp" />
+        <BitmapImage x:Key="HiyobiIcon">Resources/hiyobi.ico</BitmapImage>
+        <BitmapImage x:Key="HitomiIcon">Resources/hitomi.jpg</BitmapImage>
+    </Window.Resources>
     <Grid>
         <DockPanel>
             <Grid DockPanel.Dock="Top">
@@ -65,16 +72,16 @@
                     <MenuItem Header="인터넷" x:Name="InternetMenu" Background="White">
                         <MenuItem x:Name="MenuHiyobi" Header="Hiyobi.me">
                             <MenuItem.Icon>
-                                <Image Source="https://hiyobi.me/favicon.ico"/>
+                                <Image Source="{StaticResource ResourceKey=HiyobiIcon}"/>
                             </MenuItem.Icon>
                             <MenuItem Header="메인화면" Click="MenuHiyobi_Click">
                                 <MenuItem.Icon>
-                                    <Image Source="https://hiyobi.me/favicon.ico"/>
+                                    <Image Source="{StaticResource ResourceKey=HiyobiIcon}"/>
                                 </MenuItem.Icon>
                             </MenuItem>
                             <MenuItem>
                                 <MenuItem.Icon>
-                                    <Image Source="https://hiyobi.me/favicon.ico"/>
+                                    <Image Source="{StaticResource ResourceKey=HiyobiIcon}"/>
                                 </MenuItem.Icon>
                                 <MenuItem.Header>
                                     <Grid Width="200">
@@ -87,19 +94,43 @@
                                     </Grid>
                                 </MenuItem.Header>
                             </MenuItem>
+                            <MenuItem>
+                                <MenuItem.Icon>
+                                    <Image Source="{StaticResource ResourceKey=HiyobiIcon}"/>
+                                </MenuItem.Icon>
+                                <MenuItem.Header>
+                                    <Grid MinWidth="200">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="8*" />
+                                            <ColumnDefinition Width="2*" />
+                                        </Grid.ColumnDefinitions>
+                                        <wpf:AutoCompleteTextBox VerticalAlignment="Top"
+                                                             Height="20"
+                                                             Watermark="태그 검색"
+                                                             Provider="{StaticResource ResourceKey=fsp}"
+                                                             Background="White"
+                                                             x:Name="Actb">
+                                            <wpf:AutoCompleteTextBox.LoadingContent>
+                                                <TextBlock Text="Loading..."/>
+                                            </wpf:AutoCompleteTextBox.LoadingContent>
+                                        </wpf:AutoCompleteTextBox>
+                                        <Button Grid.Column="1" Content="검색" Click="Hiyobi_Search_Button_Click"/>
+                                    </Grid>
+                                </MenuItem.Header>
+                            </MenuItem>
                         </MenuItem>
                         <MenuItem x:Name="MenuHitomi" Header="Hitomi.la">
                             <MenuItem.Icon>
-                                <Image Source="https://ltn.hitomi.la/favicon-16x16.png"/>
+                                <Image Source="{StaticResource HitomiIcon}"/>
                             </MenuItem.Icon>
                             <MenuItem Header="메인화면" Click="MenuHitomi_Click">
                                 <MenuItem.Icon>
-                                    <Image Source="https://ltn.hitomi.la/favicon-16x16.png"/>
+                                    <Image Source="{StaticResource HitomiIcon}"/>
                                 </MenuItem.Icon>
                             </MenuItem>
                             <MenuItem>
                                 <MenuItem.Icon>
-                                    <Image Source="https://ltn.hitomi.la/favicon-16x16.png"/>
+                                    <Image Source="{StaticResource HitomiIcon}"/>
                                 </MenuItem.Icon>
                                 <MenuItem.Header>
                                     <Grid Width="200">

@@ -143,7 +143,7 @@ namespace HitomiViewer
                     }
                     else
                     {
-                        tag.types = Structs.Tag.Types.tag;
+                        tag.types = Tag.Types.tag;
                         tag.name = item;
                     }
 
@@ -168,6 +168,7 @@ namespace HitomiViewer
             doujinshi,
             artistcg,
             manga,
+            gamecg,
             none,
         }
     }

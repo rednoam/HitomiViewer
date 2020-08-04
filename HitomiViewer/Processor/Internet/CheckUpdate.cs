@@ -88,6 +88,10 @@ namespace HitomiViewer.Scripts
                     _ = Main();
                 };
             }
+            else
+            {
+                _ = Main();
+            }
         }
         public static async Task<string> Load(string Url)
         {

@@ -144,15 +144,10 @@ namespace HitomiViewer
                         for (int i = 0; i < hitomi.files.Length; i++)
                         {
                             this.Title = hitomi.name + " " + i + "/" + (hitomi.files.Length - 1);
-                            if (hitomi.images == null)
+                            if (hitomi.images == null || hitomi.images.Length < hitomi.page)
                                 hitomi.images = new BitmapImage[hitomi.page];
                             if (hitomi.images[i] == null)
-                            {
-                                if (hitomi.files[i].EndsWith(".webp"))
-                                    hitomi.images[i] = await LoadWebP(hitomi.files[i]);
-                                else
-                                    hitomi.images[i] = await LoadWebImageAsync(hitomi.files[i]);
-                            }
+                                hitomi.images[i] = await ImageProcessor.ProcessEncryptAsync(hitomi.files[i]);
                         }
                     }
                     catch { }
@@ -196,9 +191,7 @@ namespace HitomiViewer
             if (hitomi.images == null || hitomi.images.Length < hitomi.page)
                 hitomi.images = new BitmapImage[hitomi.page];
             if (hitomi.images[copypage] == null)
-            {
                 hitomi.images[copypage] = await ImageProcessor.ProcessEncryptAsync(link);
-            }
             if (copypage == page)
                 image.Source = hitomi.images[page];
             /*
@@ -321,7 +314,7 @@ namespace HitomiViewer
                 bimgTemp.EndInit();
                 return bimgTemp;
             }
-            catch
+            catch (Exception ex)
             {
                 return null;
             }

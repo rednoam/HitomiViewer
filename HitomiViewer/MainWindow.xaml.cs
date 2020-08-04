@@ -9,6 +9,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -44,6 +46,7 @@ namespace HitomiViewer
         public List<Reader> Readers = new List<Reader>();
         public MainWindow()
         {
+            AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(ResolveAssembly);
             new LoginClass().Test();
             InitializeComponent();
             Init();
@@ -53,6 +56,7 @@ namespace HitomiViewer
         private void Init()
         {
             CheckUpdate.Auto();
+            HiyobiTags.LoadTags();
             this.MinWidth = 300;
             Global.MainWindow = this;
             string[] args = Environment.GetCommandLineArgs();
@@ -95,6 +99,28 @@ namespace HitomiViewer
             SearchMode2.SelectionChanged += SearchMode2_SelectionChanged;
             Page_Index.SelectionChanged += Page_Index_SelectionChanged;
             Page_ItemCount.SelectionChanged += Page_ItemCount_SelectionChanged;
+        }
+        private static Assembly ResolveAssembly(object sender, ResolveEventArgs args)
+        {
+            Assembly thisAssembly = Assembly.GetExecutingAssembly();
+            var name = args.Name.Substring(0, args.Name.IndexOf(',')) + ".dll";
+
+            var resources = thisAssembly.GetManifestResourceNames().Where(s => s.EndsWith(name));
+            if (resources.Count() > 0)
+            {
+                string resourceName = resources.First();
+                using (Stream stream = thisAssembly.GetManifestResourceStream(resourceName))
+                {
+                    if (stream != null)
+                    {
+                        byte[] assembly = new byte[stream.Length];
+                        stream.Read(assembly, 0, assembly.Length);
+                        Console.WriteLine("Dll file load : " + resourceName);
+                        return Assembly.Load(assembly);
+                    }
+                }
+            }
+            return null;
         }
 
         public void LoadHitomi(string path) => LoadHitomi(Directory.GetDirectories(path));
@@ -256,7 +282,6 @@ namespace HitomiViewer
             MainPanel.Children.Clear();
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
-            //path = new InputBox("불러올 하위 폴더이름", "폴더 지정", "폴더 이름").ShowDialog();
             int pages = Directory.GetDirectories(path).Length / 25 + 1;
             for (int i = 0; i < pages; i++)
             {

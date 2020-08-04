@@ -25,51 +25,112 @@ namespace HitomiViewer
     /// </summary>
     public partial class Settings : Window
     {
+        private readonly string[] oldconfig = new string[] { "pw", "fe", "autofe", "et", "rt", "df", "fav" };
+        private readonly string[] newconfig = new string[] { password, file_encrypt, download_file_encrypt, encrypt_title, random_title, download_folder, favorites };
+
+        public const string password = "password";
+        public const string file_encrypt = "file-encrypt";
+        public const string download_file_encrypt = "download-file-encrypt";
+        public const string encrypt_title = "encrypt-title";
+        public const string random_title = "random-title";
+        public const string download_folder = "download-file";
+        public const string except_tags = "except-tags";
+        public const string favorites = "favorites";
+        public const string block_tags = "block_tags";
+
+        private List<string> ExceptTagList = new List<string>();
+
         public Settings()
         {
             InitializeComponent();
             Config cfg = new Config();
             JObject config = cfg.Load();
-            FileEncrypt.IsEnabled = false;
-            AutoEncryption.IsEnabled = false;
-            if (config.GetValue("pw") != null)
-                Password.IsChecked = true;
-            if (config.GetValue("fe") != null)
-                FileEncrypt.IsChecked = bool.Parse(config["fe"].ToString());
-            if (config.GetValue("autofe") != null)
-                AutoEncryption.IsChecked = bool.Parse(config["autofe"].ToString());
-            if (config.GetValue("et") != null)
-                EncryptTitle.IsChecked = config.BoolValue("et");
-            if (config.GetValue("rt") != null)
-                RandomTitle.IsChecked = config.BoolValue("rt");
-            FolderName.Content = config.StringValue("df");
+            if (oldconfig.Where(x => config[x] != null).Count() > 0) Update();
+            InitFolderName(config);
+            InitPassword(config);
+            InitEncrypt(config);
+            InitTitle(config);
+            InitTags(config);
+        }
+
+        private void Update()
+        {
+            Config cfg = new Config();
+            JObject oldconfig = cfg.Load();
+            JObject newconfig = new JObject();
+            string[] prev = this.oldconfig;
+            string[] next = this.newconfig;
+            for (int i = 0; i < prev.Length; i++)
+            {
+                newconfig[next[i]] = oldconfig[prev[i]];
+            }
+            cfg.Save(newconfig);
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             Config cfg = new Config();
             JObject config = cfg.Load();
-            config["fe"] = false;
-            config["autofe"] = false;
+            CheckPassword(ref config);
+            CheckTitle(ref config);
+            CheckTags(ref config);
+
+            cfg.Save(config);
+            Close();
+        }
+
+        private void InitFolderName(JObject config)
+        {
+            FolderName.Content = config.StringValue(download_folder);
+        }
+        private void InitPassword(JObject config)
+        {
+            if (config.GetValue(password) != null)
+                Password.IsChecked = true;
+        }
+        private void InitEncrypt(JObject config)
+        {
+            if (config.GetValue(file_encrypt) != null)
+                FileEncrypt.IsChecked = config.BoolValue(download_file_encrypt);
+            if (config.GetValue(download_file_encrypt) != null)
+                AutoEncryption.IsChecked = config.BoolValue(download_file_encrypt);
+        }
+        private void InitTitle(JObject config)
+        {
+            if (config.GetValue(encrypt_title) != null)
+                EncryptTitle.IsChecked = config.BoolValue(encrypt_title);
+            if (config.GetValue(random_title) != null)
+                RandomTitle.IsChecked = config.BoolValue(random_title);
+        }
+        private void InitTags(JObject config)
+        {
+            if (config[block_tags] != null)
+            {
+                BlockTags.IsChecked = config.BoolValue(block_tags);
+            }
+            if (config[except_tags] != null)
+            {
+                List<string> tags = config.ArrayValue<string>(except_tags).ToList();
+                foreach (string tag in tags) ExceptTagList.Add(tag);
+            }
+            TagList2ListBox();
+        }
+
+        private void CheckPassword(ref JObject config)
+        {
             if (Password.IsChecked.Value)
             {
-                if (!config.ContainsKey("pw"))
-                    config["pw"] = SHA256.Hash(new InputBox("비밀번호를 입력해주세요.", "비밀번호 설정", "").ShowDialog());
-                config["fe"] = FileEncrypt.IsChecked.Value;
+                if (!config.ContainsKey(password))
+                    config[password] = SHA256.Hash(new InputBox("비밀번호를 입력해주세요.", "비밀번호 설정", "").ShowDialog());
+                config[file_encrypt] = FileEncrypt.IsChecked.Value;
                 if (FileEncrypt.IsChecked.Value == true)
-                    config["autofe"] = AutoEncryption.IsChecked.Value;
+                    config[download_file_encrypt] = AutoEncryption.IsChecked.Value;
             }
             else
             {
-                config.Remove("pw");
+                config.Remove(password);
             }
-            config["et"] = EncryptTitle.IsChecked ?? false;
-            if (!EncryptTitle.IsChecked ?? false)
-                config["rt"] = RandomTitle.IsChecked ?? false;
-
-            cfg.Save(config);
-
-            if (config["pw"] == null)
+            if (config[password] == null)
             {
                 Global.MainWindow.Encrypt.Visibility = Visibility.Collapsed;
                 Global.MainWindow.Decrypt.Visibility = Visibility.Collapsed;
@@ -79,7 +140,42 @@ namespace HitomiViewer
                 Global.MainWindow.Encrypt.Visibility = Visibility.Visible;
                 Global.MainWindow.Decrypt.Visibility = Visibility.Visible;
             }
-            Close();
+        }
+        private void CheckTitle(ref JObject config)
+        {
+            config[encrypt_title] = EncryptTitle.IsChecked ?? false;
+            if (!EncryptTitle.IsChecked ?? false)
+                config[random_title] = RandomTitle.IsChecked ?? false;
+        }
+        private void CheckTags(ref JObject config)
+        {
+            config[block_tags] = BlockTags.IsChecked ?? false;
+            if (ExceptTagList.Count > 0)
+            {
+                config[except_tags] = JToken.FromObject(ExceptTagList);
+            }
+        }
+
+        private void TagList2ListBox()
+        {
+            ExceptTags.Items.Clear();
+            foreach (string tag in ExceptTagList)
+            {
+                StackPanel stack = new StackPanel();
+                stack.Children.Add(new Label
+                {
+                    MinWidth = 176,
+                    Content = tag
+                });
+                Button btn = new Button { Content = "x" };
+                btn.Click += (object sender, RoutedEventArgs e) =>
+                {
+                    ExceptTags.Items.Remove(stack);
+                    ExceptTagList.Remove(tag);
+                };
+                stack.Children.Add(btn);
+                ExceptTags.Items.Add(stack);
+            }
         }
 
         private void Password_Checked(object sender, RoutedEventArgs e) => FileEncrypt.IsEnabled = true;
@@ -90,10 +186,6 @@ namespace HitomiViewer
         private void RandomTitle_Unchecked(object sender, RoutedEventArgs e) => EncryptTitle.IsEnabled = true;
         private void EncryptTitle_Checked(object sender, RoutedEventArgs e) => RandomTitle.IsEnabled = false;
         private void EncryptTitle_Unchecked(object sender, RoutedEventArgs e) => RandomTitle.IsEnabled = true;
-        private void Button_Click_1(object sender, RoutedEventArgs e)
-        {
-
-        }
         private void ChangePassword_Click(object sender, RoutedEventArgs e)
         {
             Config cfg = new Config();
@@ -130,23 +222,32 @@ namespace HitomiViewer
             }
             MessageBox.Show("암호화 완료");
         }
-
         private void ChangeDownloadFolder_Click(object sender, RoutedEventArgs e)
         {
             Config cfg = new Config();
             JObject config = cfg.Load();
-            config["df"] = new InputBox("다운로드 폴더 설정", "설정", "").ShowDialog();
+            config[download_folder] = new InputBox("다운로드 폴더 설정", "설정", "").ShowDialog();
             cfg.Save(config);
-            FolderName.Content = config.StringValue("df");
+            FolderName.Content = config.StringValue(download_folder);
         }
-
         private void RandomDownloadFolder_Click(object sender, RoutedEventArgs e)
         {
             Config cfg = new Config();
             JObject config = cfg.Load();
-            config["df"] = Random2.RandomString(int.Parse(new InputBox("랜덤 길이 지정", "설정", "").ShowDialog()));
+            config[download_folder] = Random2.RandomString(int.Parse(new InputBox("랜덤 길이 지정", "설정", "").ShowDialog()));
             cfg.Save(config);
-            FolderName.Content = config.StringValue("df");
+            FolderName.Content = config.StringValue(download_folder);
+        }
+        private void ExcecptTagsText_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter) ExceptTagsBtn_Click(null, null);
+        }
+        private void ExceptTagsBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (!HiyobiTags.Tags.Select(x => x.name).Contains(ExceptTagsText.Text)) return;
+            ExceptTagList.Add(ExceptTagsText.Text);
+            ExceptTagsText.Text = "";
+            TagList2ListBox();
         }
     }
 }

@@ -16,10 +16,10 @@ namespace HitomiViewer.Scripts
             JObject config = new Config().Load();
             if (config == null) return;
 
-            if (config["pw"] != null)
+            if (config[Settings.password] != null)
             {
                 LoginWindow lw = new LoginWindow();
-                lw.password = config["pw"].ToString();
+                lw.password = config[Settings.password].ToString();
                 if (!lw.ShowDialog().Value) Environment.Exit(0);
             }
         }

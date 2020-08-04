@@ -25,9 +25,6 @@
         </DockPanel.ContextMenu>
         <Border x:Name="border" Background="LightGray" DockPanel.Dock="Left">
             <Image x:Name="thumbNail" VerticalAlignment="Stretch" Width="100">
-                <Image.BitmapEffect>
-                    <BlurBitmapEffect Radius="5" KernelType="Gaussian" />
-                </Image.BitmapEffect>
                 <Image.OpacityMask>
                     <ImageBrush x:Name="thumbBrush"/>
                 </Image.OpacityMask>

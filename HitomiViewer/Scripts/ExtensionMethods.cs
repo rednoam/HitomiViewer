@@ -201,6 +201,7 @@ namespace ExtensionMethods
             if (config[path] == null) return new List<T>();
             return config[path].ToObject<List<T>>();
         }
+
         public static async void TaskCallback<T>(this Task<T> Task, Action<T> callback) where T : class => callback(await Task);
         public static bool ToBool(this int i) => Convert.ToBoolean(i);
         public static void RemoveAllEvents(this EventHandler events)
@@ -209,6 +210,12 @@ namespace ExtensionMethods
             {
                 events -= eh;
             }
+        }
+
+        public static IEnumerable<string> StartsContains(this IEnumerable<string> ie, string s)
+        {
+            IEnumerable<string> res = ie.Where(x => x.StartsWith(s));
+            return res.Concat(ie.Where(x => x.Contains(s))).Distinct();
         }
     }
 }

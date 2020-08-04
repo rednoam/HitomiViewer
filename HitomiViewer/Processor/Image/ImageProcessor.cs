@@ -134,21 +134,17 @@ namespace HitomiViewer.Scripts
         }
         public static BitmapImage LoadMemory(string url)
         {
-            try
-            {
-                var bitmap = new BitmapImage();
-                var stream = File.OpenRead(url);
+            var bitmap = new BitmapImage();
+            var stream = File.OpenRead(url);
 
-                bitmap.BeginInit();
-                bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                bitmap.StreamSource = stream;
-                bitmap.EndInit();
-                stream.Close();
-                stream.Dispose();
-                bitmap.Freeze();
-                return bitmap;
-            }
-            catch { return null; }
+            bitmap.BeginInit();
+            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.StreamSource = stream;
+            bitmap.EndInit();
+            stream.Close();
+            stream.Dispose();
+            bitmap.Freeze();
+            return bitmap;
         }
         public static BitmapImage LoadWebImage(string url)
         {
@@ -246,10 +242,6 @@ namespace HitomiViewer.Scripts
         {
             Uri oUri = new Uri($"pack://siteoforigin:,,,/Resources/{psResourceName}");
             return new BitmapImage(oUri);
-        }
-        public static string UrlFromResource(string psResourceName)
-        {
-            return $"pack://siteoforigin:,,,/Resources/{psResourceName}";
         }
         public static BitmapImage FromResourceWithName(string psAssemblyName, string psResourceName)
         {
