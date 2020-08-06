@@ -11,7 +11,8 @@ namespace HitomiViewer.Scripts
 {
     class Config
     {
-        public readonly string path = Path.Combine(MainWindow.rootDir, "config.json");
+        public static readonly string path = Path.Combine(MainWindow.rootDir, "config.json");
+        public static readonly string encryptpath = Path.Combine(MainWindow.rootDir, "config.lock");
         private JObject config;
 
         public JObject Load()

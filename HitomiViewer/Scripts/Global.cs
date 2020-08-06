@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,6 +12,8 @@ namespace HitomiViewer
 {
     class Global
     {
+        public static readonly string rootDir = AppDomain.CurrentDomain.BaseDirectory;
+
         public static MainWindow MainWindow;
         public const string basicPatturn = "*.jpg";
         public static Color background = Colors.White;
@@ -26,10 +29,13 @@ namespace HitomiViewer
         public static Config cfg = new Config();
         public static JObject cfgob = cfg.Load();
         public static string Password = cfg.StringValue(Settings.password);
+        public static string OrginPassword = null;
         public static string DownloadFolder = cfg.StringValue(Settings.download_folder) ?? "hitomi_downloaded";
         public static bool FileEn = cfg.BoolValue(Settings.file_encrypt) ?? false;
         public static bool AutoFileEn = cfg.BoolValue(Settings.download_file_encrypt) ?? false;
         public static bool EncryptTitle = cfg.BoolValue(Settings.encrypt_title) ?? false;
         public static bool RandomTitle = cfg.BoolValue(Settings.random_title) ?? false;
+
+        public static readonly string EncryptInfoFile = Path.Combine(rootDir, "EncryptInfo.lock");
     }
 }

@@ -16,7 +16,7 @@ namespace HitomiViewer.AutoComplete
         {
             List<Tag> tags = HiyobiTags.Tags;
             if (tags == null) HiyobiTags.LoadTags();
-            if (filter.Split(' ').Length > 0)
+            if (filter.Split(' ').Length > 1)
             {
                 string filterstring = string.Join(" ", filter.Split(' ').Take(filter.Split(' ').Length - 1));
                 return tags.Select(x => x.name)

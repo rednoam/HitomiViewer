@@ -23,6 +23,9 @@ namespace HitomiViewer
     /// </summary>
     public partial class LoginWindow : Window
     {
+        public delegate bool CheckDelegate(string password);
+        public CheckDelegate CheckPassword;
+
         public string password = null;
         public int count = 3;
 
@@ -37,7 +40,10 @@ namespace HitomiViewer
             if (password == null)
                 DialogResult = true;
             if (SHA256.Hash(Password.Password) == password)
+            {
+                Global.OrginPassword = password;
                 DialogResult = true;
+            }
             else
             {
                 count--;

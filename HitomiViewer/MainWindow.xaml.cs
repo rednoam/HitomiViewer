@@ -449,7 +449,11 @@ namespace HitomiViewer
         }
         private void Hiyobi_Search_Text_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Enter) Hiyobi_Search_Button_Click(sender, null);
+            if (e.Key == Key.Enter) Task.Factory.StartNew(() =>
+            {
+                Thread.Sleep(500);
+                Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => Hiyobi_Search_Button_Click(null, null)));
+            });
         }
         public void Hiyobi_Search_Button_Click(object sender, RoutedEventArgs e)
         {

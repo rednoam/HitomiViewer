@@ -163,6 +163,15 @@ namespace HitomiViewer.Scripts
             url = "https://api.hiyobi.me/auto.json";
             return await LoadJArray();
         }
+        public async Task<bool> isHiyobi(int? index = null)
+        {
+            try
+            {
+                _ = await Load($"https://cdn.hiyobi.me/data/json/{index ?? this.index}.json");
+                return true;
+            }
+            catch { return false; }
+        }
         #endregion
         #region Hitomi
         public async Task<Hitomi> HitomiData()
@@ -265,8 +274,9 @@ namespace HitomiViewer.Scripts
             }
             return files;
         }
-        public async Task<byte[]> LoadNozomi()
+        public async Task<byte[]> LoadNozomi(string url = null)
         {
+            this.url = url ?? this.url ?? "https://ltn.hitomi.la/index-all.nozomi";
             if (url.Last() == '/') url = url.Remove(url.Length - 1);
             HttpClient client = new HttpClient();
             client.DefaultRequestHeaders.Range = new System.Net.Http.Headers.RangeHeaderValue(index * 4, (index + count) * 4 - 1);
@@ -331,7 +341,7 @@ namespace HitomiViewer.Scripts
                         h.tags = HitomiTags(info);
                         h.files = HitomiFiles(info).ToArray();
                         h.page = h.files.Length;
-                        h.thumb = ImageProcessor.LoadWebImage("https:" + h.thumbpath);
+                        h.thumb = await ImageProcessor.LoadWebImageAsync("https:" + h.thumbpath);
                         update(h, items.IndexOf(item), items.Count);
                     }
                 }
@@ -346,7 +356,7 @@ namespace HitomiViewer.Scripts
                         dir = item,
                         page = innerFiles.Length,
                         files = innerFiles,
-                        thumb = ImageProcessor.ProcessEncrypt(innerFiles.First()),
+                        thumb = await ImageProcessor.ProcessEncryptAsync(innerFiles.First()),
                         type = Hitomi.Type.Folder,
                         FolderByte = File2.GetFolderByte(item),
                         SizePerPage = File2.GetSizePerPage(item)
@@ -356,15 +366,6 @@ namespace HitomiViewer.Scripts
             }
             end();
             return res;
-        }
-        public async Task<bool> isHiyobi(int? index = null)
-        {
-            try
-            {
-                await Load($"https://cdn.hiyobi.me/data/json/{(index ?? this.index).ToString()}.json");
-                return true;
-            }
-            catch { return false; }
         }
 
         public long GetWebSize(string url = null)

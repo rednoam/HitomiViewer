@@ -15,6 +15,8 @@ namespace HitomiViewer.Scripts
 {
     class ImageProcessor
     {
+        private static string Password = Global.OrginPassword;
+
         public static BitmapImage ProcessEncrypt(string url)
         {
             if (url.isUrl())

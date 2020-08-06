@@ -79,7 +79,7 @@
                                     <Image Source="{StaticResource ResourceKey=HiyobiIcon}"/>
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem>
+                            <!--<MenuItem>
                                 <MenuItem.Icon>
                                     <Image Source="{StaticResource ResourceKey=HiyobiIcon}"/>
                                 </MenuItem.Icon>
@@ -93,7 +93,7 @@
                                         <Button Grid.Column="1" Content="검색" Click="Hiyobi_Search_Button_Click" x:Name="Hiyobi_Search_Button"/>
                                     </Grid>
                                 </MenuItem.Header>
-                            </MenuItem>
+                            </MenuItem>-->
                             <MenuItem>
                                 <MenuItem.Icon>
                                     <Image Source="{StaticResource ResourceKey=HiyobiIcon}"/>
@@ -105,11 +105,12 @@
                                             <ColumnDefinition Width="2*" />
                                         </Grid.ColumnDefinitions>
                                         <wpf:AutoCompleteTextBox VerticalAlignment="Top"
-                                                             Height="20"
-                                                             Watermark="태그 검색"
-                                                             Provider="{StaticResource ResourceKey=fsp}"
-                                                             Background="White"
-                                                             x:Name="Actb">
+                                                                 Height="20"
+                                                                 Watermark="태그 검색"
+                                                                 Provider="{StaticResource ResourceKey=fsp}"
+                                                                 Background="White"
+                                                                 Keyboard.KeyDown="Hiyobi_Search_Text_KeyDown"
+                                                                 x:Name="Hiyobi_Search_Text">
                                             <wpf:AutoCompleteTextBox.LoadingContent>
                                                 <TextBlock Text="Loading..."/>
                                             </wpf:AutoCompleteTextBox.LoadingContent>
@@ -138,7 +139,18 @@
                                             <ColumnDefinition Width="8*" />
                                             <ColumnDefinition Width="2*" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBox Grid.Column="0" Keyboard.KeyDown="Hitomi_Search_Text_KeyDown" x:Name="Hitomi_Search_Text"/>
+                                        <wpf:AutoCompleteTextBox VerticalAlignment="Top"
+                                                                 Grid.Column="0"
+                                                                 Height="20"
+                                                                 Watermark="태그 검색"
+                                                                 Provider="{StaticResource ResourceKey=fsp}"
+                                                                 Background="White"
+                                                                 Keyboard.KeyDown="Hitomi_Search_Text_KeyDown"
+                                                                 x:Name="Hitomi_Search_Text">
+                                            <wpf:AutoCompleteTextBox.LoadingContent>
+                                                <TextBlock Text="Loading..."/>
+                                            </wpf:AutoCompleteTextBox.LoadingContent>
+                                        </wpf:AutoCompleteTextBox>
                                         <Button Grid.Column="1" Content="검색" Click="Hitomi_Search_Button_Click" x:Name="Hitomi_Search_Button"/>
                                     </Grid>
                                 </MenuItem.Header>

@@ -31,6 +31,9 @@
             <CheckBox x:Name="BlockTags">태그 차단
                 <CheckBox.ToolTip>기본적으로 차단된 태그는 블러 처리되서 보이지만 이 기능을 키면 아예 안보이게 됩니다.</CheckBox.ToolTip>
             </CheckBox>
+            <CheckBox x:Name="SafeData">안전한 데이터 저장
+                <CheckBox.ToolTip>기본적으로 차단된 태그는 블러 처리되서 보이지만 이 기능을 키면 아예 안보이게 됩니다.</CheckBox.ToolTip>
+            </CheckBox>
             <Button Click="Button_Click">저장</Button>
             <Button Click="ChangePassword_Click">비밀번호 변경</Button>
             <StackPanel Orientation="Horizontal">

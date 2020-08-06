@@ -32,6 +32,18 @@ namespace HitomiViewer.Encryption
             ICryptoTransform transform = rijndaelCipher.CreateEncryptor();;
             return transform.TransformFinalBlock(byteToEncrypt, 0, byteToEncrypt.Length);
         }
+        public static bool TryEncrypt(ref byte[] byteDecrypt, byte[] byteToEncrypt, string key)
+        {
+            try
+            {
+                byteDecrypt = Encrypt(byteToEncrypt, key);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
         public static byte[] Decrypt(byte[] byteToDecrypt, string key)
         {
             RijndaelManaged rijndaelCipher = new RijndaelManaged

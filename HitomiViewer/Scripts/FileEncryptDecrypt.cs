@@ -12,6 +12,12 @@ namespace HitomiViewer.Scripts
 {
     class FileEncrypt
     {
+        public delegate byte[] DelegateEncrypt(byte[] data, string key);
+        public static readonly DelegateEncrypt Encrypt = new DelegateEncrypt(AES128.Encrypt);
+
+        public delegate bool DelegateTryEncrypt(ref byte[] byteDecrypt, byte[] byteToEncrypt, string key);
+        public static readonly DelegateTryEncrypt TryEncrypt = new DelegateTryEncrypt(AES128.TryEncrypt);
+
         public static void AutoFe(string url)
         {
             if (Global.AutoFileEn)
@@ -21,7 +27,7 @@ namespace HitomiViewer.Scripts
         }
         public static void Files(string url, string password = null)
         {
-            password = password ?? Global.Password;
+            password = password ?? FilePassword.Password;
             string[] files = Directory.GetFiles(url);
             foreach (string file in files)
             {
@@ -29,7 +35,7 @@ namespace HitomiViewer.Scripts
                 if (Path.GetFileName(file) == "info.txt") continue;
                 if (Path.GetExtension(file) == ".lock") continue;
                 byte[] org = File.ReadAllBytes(file);
-                byte[] enc = AES128.Encrypt(org, password);
+                byte[] enc = Encrypt(org, password);
                 File.Delete(file);
                 File.WriteAllBytes(file + ".lock", enc);
             }
@@ -40,14 +46,14 @@ namespace HitomiViewer.Scripts
             WebClient wc = new WebClient();
             wc.DownloadDataAsync(url, path);
             wc.DownloadDataCompleted += (object sender2, DownloadDataCompletedEventArgs e2)
-                => File.WriteAllBytes(e2.UserState.ToString(), AES128.Encrypt(e2.Result, Global.Password));
+                => File.WriteAllBytes(e2.UserState.ToString(), Encrypt(e2.Result, FilePassword.Password));
         }
     }
     class FileDecrypt
     {
         public static void Files(string url, string password = null)
         {
-            password = password ?? Global.Password;
+            password = password ?? FilePassword.Password;
             string[] files = Directory.GetFiles(url);
             foreach (string file in files)
             {
@@ -82,5 +88,10 @@ namespace HitomiViewer.Scripts
             }
             return !err;
         }
+    }
+    class FilePassword
+    {
+        public static string Password => Default(Global.OrginPassword);
+        public static string Default(string org) => SHA256.Hash(org);
     }
 }

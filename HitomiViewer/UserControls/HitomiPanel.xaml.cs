@@ -510,19 +510,7 @@ namespace HitomiViewer.UserControls
         }
         private void Decrypt_Click(object sender, RoutedEventArgs e)
         {
-            string[] files = Directory.GetFiles(h.dir);
-            bool err = false;
-            foreach (string file in files)
-            {
-                try
-                {
-                    byte[] org = File.ReadAllBytes(file);
-                    byte[] enc = AES128.Decrypt(org, Global.Password);
-                    File.Delete(file);
-                    File.WriteAllBytes(Path.Combine(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file)), enc);
-                }
-                catch { err = true; }
-            }
+            bool err = FileDecrypt.TryFiles(h.dir);
             if (err)
             {
                 while (true)
