@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using HitomiViewer.Properties;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -66,6 +67,8 @@ namespace HitomiViewer.Scripts
         }
         public static async Task UpdateChain()
         {
+            if (!File.Exists(Path.Combine(Global.rootDir, "WebPTest.exe")))
+                File.WriteAllBytes(Path.Combine(Global.rootDir, "WebPTest.exe"), Resources.WebPTest);
             Version version = new Version(0, 0, 0, 0);
             if (File.Exists(Path.Combine(MainWindow.rootDir, "Updater.exe")))
             {

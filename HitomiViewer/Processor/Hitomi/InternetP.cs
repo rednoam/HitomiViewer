@@ -52,7 +52,7 @@ namespace HitomiViewer.Processor
         }
         public async Task<JObject> HitomiGalleryInfo()
         {
-            string html = await Load(url);
+            gstring html = await Load(url);
             JObject jObject = JObject.Parse(html.Replace("var galleryinfo = ", ""));
             return jObject;
         }
@@ -120,6 +120,15 @@ namespace HitomiViewer.Processor
             if (url.Last() == '/') url = url.Remove(url.Length - 1);
             HttpClient client = new HttpClient();
             client.DefaultRequestHeaders.Range = new System.Net.Http.Headers.RangeHeaderValue(index * 4, (index + count) * 4 - 1);
+            var response = await client.GetAsync(url);
+            var pageContents = await response.Content.ReadAsByteArrayAsync();
+            return pageContents;
+        }
+        public async Task<byte[]> LoadNozomiMax(string url = null)
+        {
+            url = url ?? this.url ?? "https://ltn.hitomi.la/index-all.nozomi";
+            if (url.Last() == '/') url = url.Remove(url.Length - 1);
+            HttpClient client = new HttpClient();
             var response = await client.GetAsync(url);
             var pageContents = await response.Content.ReadAsByteArrayAsync();
             return pageContents;

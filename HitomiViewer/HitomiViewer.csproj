@@ -213,6 +213,7 @@
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <None Include="packages.config" />
     <None Include="Properties\app.manifest" />
@@ -302,6 +303,12 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="FunctionList.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Updater.exe" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\WebPTest.exe" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

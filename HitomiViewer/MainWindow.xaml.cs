@@ -3,6 +3,7 @@ using HitomiViewer.Encryption;
 using HitomiViewer.Processor;
 using HitomiViewer.Scripts;
 using HitomiViewer.Scripts.Loaders;
+using HitomiViewer.Structs;
 using HitomiViewer.UserControls;
 using Microsoft.Win32;
 using Newtonsoft.Json.Linq;
@@ -50,22 +51,9 @@ namespace HitomiViewer
             AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(ResolveAssembly);
             new LoginClass().Run();
             new Config().GetConfig().Save();
-
-            Test();
-
             InitializeComponent();
             Init();
             InitEvents();
-        }
-
-        private async void Test()
-        {
-            InternetP parser = new InternetP();
-            parser.index = (1 - 1) * 40;
-            parser.count = 40;
-            parser.url = "https://ltn.hitomi.la/galleriesindex/galleries.1596781270.index";
-            int[] ids = parser.ByteArrayToIntArray(await parser.LoadNozomi());
-            Console.WriteLine(ids);
         }
 
         private void Init()
@@ -481,7 +469,11 @@ namespace HitomiViewer
         }
         private void Hiyobi_Search_Text_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Enter) Hiyobi_Search_Button_Click(null, null);
+            if (e.Key == Key.Enter) Task.Factory.StartNew(() =>
+            {
+                Thread.Sleep(500);
+                Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => Hiyobi_Search_Button_Click(null, null)));
+            });
         }
         public void Hiyobi_Search_Button_Click(object sender, RoutedEventArgs e)
         {
@@ -648,11 +640,48 @@ namespace HitomiViewer
 
         private void Hitomi_Search_TagOnly_Text_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Enter) Hitomi_Search_Button_Click(null, null);
+            if (e.Key == Key.Enter) Task.Factory.StartNew(() =>
+            {
+                Thread.Sleep(500);
+                Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => Hitomi_Search_TagOnly_Button_Click(null, null)));
+            });
         }
-        private void Hitomi_Search_TagOnly_Button_Click(object sender, RoutedEventArgs e)
+        private async void Hitomi_Search_TagOnly_Button_Click(object sender, RoutedEventArgs e)
         {
-
+            string[] tags = Hitomi_Search_TagOnly_Text.Text.Split(' ');
+            string[] tagstart = Enum.GetNames(typeof(Tag.Types));
+            tags = tags.Where(x => HiyobiTags.Tags.Select(y => y.name).Contains(x))
+                       .Where(x => tagstart.Any(x.ToLower().StartsWith)).ToArray();
+            if (tags.Length <= 0)
+            {
+                MessageBox.Show("검색 가능한 태그가 없습니다.");
+                return;
+            }
+            List<int> idlist = new List<int>();
+            int index = GetPage();
+            foreach (string tag in tags)
+            {
+                InternetP parser = new InternetP();
+                parser.url = $"https://ltn.hitomi.la/tag/{tag}-all.nozomi";
+                parser.index = index - 1;
+                parser.count = (int)1000;
+                int[] ids = parser.ByteArrayToIntArray(await parser.LoadNozomi());
+                idlist = idlist.Concat(ids).ToList();
+            }
+            List<int> new_idlist = new List<int>();
+            for (int i = 0; i < idlist.Count; i++)
+            {
+                int count = idlist.Count(y => y == idlist[i]);
+                if (count == tags.Length) new_idlist.Add(idlist[i]);
+                if (new_idlist.Count >= (int)Page_itemCount) break;
+            }
+            //idlist = idlist.Where(x => idlist.Count(y => y == x) == tags.Length).ToList();
+            //_ = idlist;
+            MainPanel.Children.Clear();
+            LabelSetup();
+            HitomiLoader hitomi = new HitomiLoader();
+            hitomi.FastDefault();
+            hitomi.FastParser(new_idlist.ToArray());
         }
     }
 }

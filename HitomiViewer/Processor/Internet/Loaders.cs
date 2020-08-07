@@ -210,12 +210,32 @@ namespace HitomiViewer.Scripts.Loaders
             parser.count = count;
             parser.url = "https://ltn.hitomi.la/index-all.nozomi";
             int[] ids = parser.ByteArrayToIntArray(await parser.LoadNozomi());
+            FastParser(ids);
+            /*
             start(ids.Count());
-            foreach (int id in ids)
+            for (int i = 0; i < ids.Length; i++)
             {
-                parser.index = id;
-                Hitomi h = await parser.HitomiData2();
-                update(h, ids.ToList().IndexOf(id), ids.Count());
+                InternetP parser2 = new InternetP();
+                parser2.index = ids[i];
+                Hitomi h = await parser2.HitomiData();
+                h.type = Hitomi.Type.Hitomi;
+                h.id = ids[i].ToString();
+                update(h, i, ids.Count());
+            }
+            end();
+            */
+        }
+        public async void FastParser(int[] ids)
+        {
+            start(ids.Length);
+            for (int i = 0; i < ids.Length; i++)
+            {
+                InternetP parser = new InternetP();
+                parser.index = ids[i];
+                Hitomi h = await parser.HitomiData();
+                h.type = Hitomi.Type.Hitomi;
+                h.id = ids[i].ToString();
+                update(h, i, ids.Count());
             }
             end();
         }
