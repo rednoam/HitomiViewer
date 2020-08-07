@@ -1,4 +1,5 @@
 ﻿using ExtensionMethods;
+using HitomiViewer.Processor;
 using HitomiViewer.Scripts;
 using HitomiViewer.Structs;
 using System;

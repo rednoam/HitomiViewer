@@ -1,4 +1,5 @@
-﻿using HitomiViewer.Scripts;
+﻿using HitomiViewer.Encryption;
+using HitomiViewer.Scripts;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -12,32 +13,64 @@ namespace HitomiViewer.Scripts
 {
     class LoginClass
     {
-        public void Test()
+        private byte[] BOrigin;
+        private byte[] Decrypt;
+
+        /// <summary>
+        /// 로그인 실행
+        /// </summary>
+        public void Run()
         {
-            if (!File.Exists(Config.path) && File.Exists(Config.encryptpath))
-            {
-                byte[] BOrigin = File.ReadAllBytes(Config.encryptpath);
-                byte[] Decrypt = null;
-                bool @try = FileEncrypt.TryEncrypt(ref Decrypt, BOrigin, FilePassword.Password);
-                string SOrigin = Encoding.UTF8.GetString(Decrypt);
-            }
+            if (!File.Exists(Global.Config.path) && File.Exists(Global.Config.encryptpath))
+                Encrypted();
             else
+                Plain();
+        }
+        /// <summary>
+        /// 암호화된 json 파일로 로그인
+        /// </summary>
+        private void Encrypted()
+        {
+            BOrigin = File.ReadAllBytes(Global.Config.encryptpath);
+            LoginWindow lw = new LoginWindow();
+            lw.CheckPassword = CheckPassword1;
+            if (lw.ShowDialog().Value)
             {
-                JObject config = new Config().Load();
-                if (config == null) return;
-
-                if (config[Settings.password] != null)
+                try
                 {
-                    LoginWindow lw = new LoginWindow();
-                    lw.password = config[Settings.password].ToString();
-                    if (!lw.ShowDialog().Value) Environment.Exit(0);
+                    byte[] Decrypt = FileDecrypt.Decrypt(BOrigin, FilePassword.Default(lw.Password.Password));
+                    string SOrigin = Encoding.UTF8.GetString(Decrypt);
+                    Global.OrginPassword = lw.Password.Password;
                 }
+                catch { Environment.Exit(0); }
             }
+        }
+        /// <summary>
+        /// 비암호화된 json 파일로 로그인
+        /// </summary>
+        private void Plain()
+        {
+            JObject config = new Config().Load();
+            if (config == null) return;
 
-            if (Global.FileEn && !File.Exists(Global.EncryptInfoFile))
+            if (config[Settings.password] != null)
             {
-                MessageBox.Show("암호화 정보 파일이 없습니다.\n복호화가 불가능할 수 있습니다.");
+                LoginWindow lw = new LoginWindow();
+                lw.CheckPassword = CheckPassword2;
+                if (!lw.ShowDialog().Value) Environment.Exit(0);
+                Global.OrginPassword = lw.Password.Password;
             }
+        }
+
+        private bool CheckPassword2(string password)
+        {
+            return SHA256.Hash(password) == new Config().Load()[Settings.password].ToString();
+        }
+
+        private bool CheckPassword1(string password)
+        {
+            bool @try = FileDecrypt.TryDecrypt(ref Decrypt, BOrigin, FilePassword.Default(password));
+            return @try;
         }
     }
 }

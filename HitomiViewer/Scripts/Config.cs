@@ -11,16 +11,28 @@ namespace HitomiViewer.Scripts
 {
     class Config
     {
-        public static readonly string path = Path.Combine(MainWindow.rootDir, "config.json");
-        public static readonly string encryptpath = Path.Combine(MainWindow.rootDir, "config.lock");
+        private readonly string path = Global.Config.path;
+        private readonly string encryptpath = Global.Config.encryptpath;
+        public bool encrypt = false;
         private JObject config;
 
         public JObject Load()
         {
             if (!File.Exists(path))
-                return new JObject();
-            config = JObject.Parse(File.ReadAllText(path));
+                return EncryptLoad();
+            config = JObject.Parse(File.ReadAllText(Global.Config.path));
             return config;
+        }
+
+        public JObject EncryptLoad()
+        {
+            if (File.Exists(path))
+                return Load();
+            if (!File.Exists(encryptpath)) return new JObject();
+            byte[] BOrigin = File.ReadAllBytes(encryptpath);
+            byte[] Decrypt = FileDecrypt.Decrypt(BOrigin, FilePassword.Password);
+            string SOrigin = Encoding.UTF8.GetString(Decrypt);
+            return JObject.Parse(SOrigin);
         }
 
         public string StringValue(string path)
@@ -45,16 +57,17 @@ namespace HitomiViewer.Scripts
         public bool Save(JObject data)
         {
             this.config = data;
-            Global.cfg = this;
-            Global.cfgob = data;
-            Global.Password = StringValue("pw");
-            Global.DownloadFolder = StringValue("df") ?? "hitomi_downloaded";
-            Global.FileEn = BoolValue("fe") ?? false;
-            Global.AutoFileEn = BoolValue("autofe") ?? false;
-            Global.EncryptTitle = BoolValue("et") ?? false;
-            Global.RandomTitle = BoolValue("rt") ?? false;
+            Global.DownloadFolder = StringValue(Settings.download_folder) ?? "hitomi_downloaded";
+            Global.FileEn = BoolValue(Settings.file_encrypt) ?? false;
+            Global.AutoFileEn = BoolValue(Settings.download_file_encrypt) ?? false;
+            Global.EncryptTitle = BoolValue(Settings.encrypt_title) ?? false;
+            Global.RandomTitle = BoolValue(Settings.random_title) ?? false;
             if (Global.DownloadFolder == "") Global.DownloadFolder = "hitomi_downloaded";
-            File.WriteAllText(path, data.ToString());
+            string path = encrypt ? Global.Config.encryptpath : Global.Config.path;
+            byte[] bytes = Encoding.UTF8.GetBytes(data.ToString());
+            if (encrypt)
+                bytes = FileEncrypt.Encrypt(bytes, Global.Password);
+            File.WriteAllBytes(path, bytes);
             return true;
         }
     }

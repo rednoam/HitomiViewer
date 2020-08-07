@@ -1,5 +1,6 @@
 ﻿using ExtensionMethods;
 using HitomiViewer.Encryption;
+using HitomiViewer.Processor;
 using HitomiViewer.Scripts;
 using HitomiViewer.Scripts.Loaders;
 using HitomiViewer.Structs;

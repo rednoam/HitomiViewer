@@ -124,6 +124,8 @@
     <Compile Include="LoginWindow.xaml.cs">
       <DependentUpon>LoginWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Processor\Hiyobi\InternetP.cs" />
+    <Compile Include="Processor\Json\InternetP.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -135,7 +137,7 @@
     <Compile Include="Scripts\Config.cs" />
     <Compile Include="Scripts\File.cs" />
     <Compile Include="Scripts\Random.cs" />
-    <Compile Include="Scripts\Tags.cs" />
+    <Compile Include="Processor\Hiyobi\Tags.cs" />
     <Compile Include="UserControls\CountBox.cs" />
     <Compile Include="Scripts\FileEncryptDecrypt.cs" />
     <Compile Include="Processor\Internet\Github.cs" />
@@ -296,6 +298,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\hitomi.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="FunctionList.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

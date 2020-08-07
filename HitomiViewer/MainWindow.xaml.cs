@@ -1,5 +1,6 @@
 ﻿using ExtensionMethods;
 using HitomiViewer.Encryption;
+using HitomiViewer.Processor;
 using HitomiViewer.Scripts;
 using HitomiViewer.Scripts.Loaders;
 using HitomiViewer.UserControls;
@@ -47,7 +48,7 @@ namespace HitomiViewer
         public MainWindow()
         {
             AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(ResolveAssembly);
-            new LoginClass().Test();
+            new LoginClass().Run();
             InitializeComponent();
             Init();
             InitEvents();
@@ -493,7 +494,7 @@ namespace HitomiViewer
             label.FontSize = 100;
             Config cfg = new Config();
             cfg.Load();
-            List<string> favs = cfg.ArrayValue<string>("fav").ToList();
+            List<string> favs = cfg.ArrayValue<string>(Settings.favorites).ToList();
             favs = favs.Where(x => Directory.Exists(x) || x.isUrl()).Distinct().ToList();
             InternetP parser = new InternetP();
             parser.start = (int count) => label.Content = "0/" + count;

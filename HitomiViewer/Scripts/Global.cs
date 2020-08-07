@@ -26,16 +26,18 @@ namespace HitomiViewer
         public static Color outlineclr = Colors.Black;
         public const int Magnif = 4;
         public const int RandomStringLength = 16;
-        public static Config cfg = new Config();
-        public static JObject cfgob = cfg.Load();
-        public static string Password = cfg.StringValue(Settings.password);
+        public static string Password = null;
         public static string OrginPassword = null;
-        public static string DownloadFolder = cfg.StringValue(Settings.download_folder) ?? "hitomi_downloaded";
-        public static bool FileEn = cfg.BoolValue(Settings.file_encrypt) ?? false;
-        public static bool AutoFileEn = cfg.BoolValue(Settings.download_file_encrypt) ?? false;
-        public static bool EncryptTitle = cfg.BoolValue(Settings.encrypt_title) ?? false;
-        public static bool RandomTitle = cfg.BoolValue(Settings.random_title) ?? false;
+        public static string DownloadFolder = null;
+        public static bool FileEn = false;
+        public static bool AutoFileEn = false;
+        public static bool EncryptTitle = false;
+        public static bool RandomTitle = false;
 
-        public static readonly string EncryptInfoFile = Path.Combine(rootDir, "EncryptInfo.lock");
+        public class Config
+        {
+            public static readonly string path = Path.Combine(MainWindow.rootDir, "config.json");
+            public static readonly string encryptpath = Path.Combine(MainWindow.rootDir, "config.lock");
+        }
     }
 }

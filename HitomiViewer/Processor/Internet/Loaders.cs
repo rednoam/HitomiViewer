@@ -1,4 +1,5 @@
 ﻿using ExtensionMethods;
+using HitomiViewer.Processor;
 using HitomiViewer.Structs;
 using Newtonsoft.Json.Linq;
 using System;
@@ -97,7 +98,7 @@ namespace HitomiViewer.Scripts.Loaders
             }
             end();
         }
-        public async void FastParser(JObject jobject)
+        public void FastParser(JObject jobject)
         {
             start(jobject["list"].Count());
             JArray arr = jobject["list"] as JArray;

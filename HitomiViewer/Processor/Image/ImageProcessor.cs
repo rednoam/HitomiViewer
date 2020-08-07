@@ -11,7 +11,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using WebPWrapper;
 
-namespace HitomiViewer.Scripts
+namespace HitomiViewer.Processor
 {
     class ImageProcessor
     {
@@ -102,7 +102,7 @@ namespace HitomiViewer.Scripts
                         return image;
                     }
                 }
-                catch (Exception ex)
+                catch
                 {
                     try
                     {

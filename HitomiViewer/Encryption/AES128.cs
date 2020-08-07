@@ -32,11 +32,11 @@ namespace HitomiViewer.Encryption
             ICryptoTransform transform = rijndaelCipher.CreateEncryptor();;
             return transform.TransformFinalBlock(byteToEncrypt, 0, byteToEncrypt.Length);
         }
-        public static bool TryEncrypt(ref byte[] byteDecrypt, byte[] byteToEncrypt, string key)
+        public static bool TryEncrypt(ref byte[] byteEncrypt, byte[] byteToEncrypt, string key)
         {
             try
             {
-                byteDecrypt = Encrypt(byteToEncrypt, key);
+                byteEncrypt = Encrypt(byteToEncrypt, key);
                 return true;
             }
             catch
@@ -65,6 +65,18 @@ namespace HitomiViewer.Encryption
             rijndaelCipher.Key = keyBytes;
             rijndaelCipher.IV = keyBytes;
             return rijndaelCipher.CreateDecryptor().TransformFinalBlock(encryptedData, 0, encryptedData.Length);
+        }
+        public static bool TryDecrypt(ref byte[] byteDecrypt, byte[] byteToDecrypt, string key)
+        {
+            try
+            {
+                byteDecrypt = Decrypt(byteToDecrypt, key);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
         #endregion
         #region String

@@ -1,4 +1,5 @@
 ﻿using ExtensionMethods;
+using HitomiViewer.Processor;
 using HitomiViewer.Structs;
 using Newtonsoft.Json.Linq;
 using System;
@@ -8,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HitomiViewer.Scripts
+namespace HitomiViewer.Processor
 {
     class HiyobiTags
     {

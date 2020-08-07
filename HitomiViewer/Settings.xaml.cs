@@ -1,5 +1,6 @@
 ﻿using ExtensionMethods;
 using HitomiViewer.Encryption;
+using HitomiViewer.Processor;
 using HitomiViewer.Scripts;
 using Newtonsoft.Json.Linq;
 using System;
@@ -51,6 +52,7 @@ namespace HitomiViewer
             InitEncrypt(config);
             InitTitle(config);
             InitTags(config);
+            SafeData.IsChecked = (!File.Exists(Global.Config.path)) && File.Exists(Global.Config.encryptpath);
         }
 
         private void Update()
@@ -74,6 +76,12 @@ namespace HitomiViewer
             CheckPassword(ref config);
             CheckTitle(ref config);
             CheckTags(ref config);
+            if (Global.OrginPassword == null)
+                new LoginClass().Run();
+            if (SafeData.IsChecked ?? false)
+                Global.Password = FilePassword.Password;
+            cfg.encrypt = SafeData.IsChecked ?? false;
+            if (cfg.encrypt) File.Delete(Global.Config.path);
 
             cfg.Save(config);
             Close();

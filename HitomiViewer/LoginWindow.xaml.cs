@@ -26,7 +26,6 @@ namespace HitomiViewer
         public delegate bool CheckDelegate(string password);
         public CheckDelegate CheckPassword;
 
-        public string password = null;
         public int count = 3;
 
         public LoginWindow()
@@ -37,11 +36,8 @@ namespace HitomiViewer
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            if (password == null)
-                DialogResult = true;
-            if (SHA256.Hash(Password.Password) == password)
+            if (CheckPassword(Password.Password))
             {
-                Global.OrginPassword = password;
                 DialogResult = true;
             }
             else

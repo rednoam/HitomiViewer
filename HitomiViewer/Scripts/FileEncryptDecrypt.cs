@@ -51,6 +51,12 @@ namespace HitomiViewer.Scripts
     }
     class FileDecrypt
     {
+        public delegate byte[] DelegateDecrypt(byte[] data, string key);
+        public static readonly DelegateDecrypt Decrypt = new DelegateDecrypt(AES128.Decrypt);
+
+        public delegate bool DelegateTryDecrypt(ref byte[] byteDecrypt, byte[] byteToEncrypt, string key);
+        public static readonly DelegateTryDecrypt TryDecrypt = new DelegateTryDecrypt(AES128.TryDecrypt);
+
         public static void Files(string url, string password = null)
         {
             password = password ?? FilePassword.Password;
