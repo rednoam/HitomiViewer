@@ -17,8 +17,9 @@ using Newtonsoft.Json.Linq;
 
 namespace ExtensionMethods
 {
-    public static class MyExtensions
+    public static partial class MyExtensions
     {
+        #region SORT
         [System.Runtime.InteropServices.DllImport("Shlwapi.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
         public static extern int StrCmpLogicalW(string psz1, string psz2);
         public static IEnumerable<string> CustomSort(this IEnumerable<string> list)
@@ -87,38 +88,8 @@ namespace ExtensionMethods
             Array.Sort(list, delegate (FileInfo x, FileInfo y) { return StrCmpLogicalW(x.Name, y.Name); });
             return list;
         }
-        public static BitmapImage ToImage(this byte[] array)
-        {
-            using (System.IO.MemoryStream ms = new System.IO.MemoryStream(array))
-            {
-                BitmapImage image = new BitmapImage();
-                image.BeginInit();
-                image.StreamSource = ms;
-                image.EndInit();
-                return image;
-            }
-        }
-        public static BitmapImage ToBitmapImage(this Bitmap bitmap)
-        {
-            // Bitmap 담을 메모리스트림 준비
-            MemoryStream ms = new MemoryStream();   // 초기화
-            bitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Bmp);   // 
-
-            // BitmapImage 로 변환
-            var bi = new BitmapImage();
-            bi.BeginInit();
-            bi.StreamSource = ms;
-            bi.CacheOption = BitmapCacheOption.OnLoad;
-            bi.EndInit();
-            return bi;
-        }
-        public static BitmapSource ToBitmapSource(this Bitmap bitmap)
-        {
-            return Imaging.CreateBitmapSourceFromHBitmap(bitmap.GetHbitmap(),
-                                      IntPtr.Zero,
-                                      Int32Rect.Empty,
-                                      BitmapSizeOptions.FromEmptyOptions());
-        }
+        #endregion
+        
         public static Hitomi Copy(this Hitomi hitomi)
         {
             return Hitomi.Copy(hitomi);
@@ -132,6 +103,7 @@ namespace ExtensionMethods
             return result;
         }
 
+        #region JSON
         public static string StringValue(this JObject config, string path)
         {
             if (config == null) return null;
@@ -201,6 +173,7 @@ namespace ExtensionMethods
             if (config[path] == null) return new List<T>();
             return config[path].ToObject<List<T>>();
         }
+        #endregion
 
         public static async void TaskCallback<T>(this Task<T> Task, Action<T> callback) where T : class => callback(await Task);
         public static bool ToBool(this int i) => Convert.ToBoolean(i);

@@ -124,6 +124,7 @@
     <Compile Include="LoginWindow.xaml.cs">
       <DependentUpon>LoginWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Processor\Hitomi\InternetP.cs" />
     <Compile Include="Processor\Hiyobi\InternetP.cs" />
     <Compile Include="Processor\Json\InternetP.cs" />
     <Compile Include="Properties\Resources.Designer.cs">

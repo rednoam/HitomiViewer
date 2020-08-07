@@ -26,6 +26,7 @@ namespace HitomiViewer
         public static Color outlineclr = Colors.Black;
         public const int Magnif = 4;
         public const int RandomStringLength = 16;
+        //[Obsolete("Password is deprecated, please use OriginPassword instead.", true)]
         public static string Password = null;
         public static string OrginPassword = null;
         public static string DownloadFolder = null;

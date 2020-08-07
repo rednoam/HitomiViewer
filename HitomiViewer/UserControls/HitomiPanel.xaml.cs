@@ -373,7 +373,19 @@ namespace HitomiViewer.UserControls
             }
             if (h.type == Hitomi.Type.Hitomi)
             {
-
+                this.nameLabel.Content = h.name + " (로딩중)";
+                InternetP parser = new InternetP();
+                parser.url = $"https://ltn.hitomi.la/galleries/{h.id}.js";
+                JObject info = await parser.HitomiGalleryInfo();
+                h.type = Hitomi.Type.Hitomi;
+                h.tags = parser.HitomiTags(info);
+                h.files = parser.HitomiFiles(info).ToArray();
+                h.page = h.files.Length;
+                h.thumb = ImageProcessor.LoadWebImage("https:" + h.thumbpath);
+                h.Json = info;
+                h = await parser.HitomiGalleryData(h);
+                this.nameLabel.Content = h.name;
+                Init();
             }
         }
 
@@ -501,7 +513,7 @@ namespace HitomiViewer.UserControls
                 if (Path.GetFileName(file) == "info.txt") continue;
                 if (Path.GetExtension(file) == ".lock") continue;
                 byte[] org = File.ReadAllBytes(file);
-                byte[] enc = AES128.Encrypt(org, Global.Password);
+                byte[] enc = FileEncrypt.Default(org);
                 File.Delete(file);
                 File.WriteAllBytes(file + ".lock", enc);
             }
@@ -565,7 +577,7 @@ namespace HitomiViewer.UserControls
             }
             else
             {
-                Global.MainWindow.Hitomi_Search_Text.Text = "artist:" + author;
+                Global.MainWindow.Hitomi_Search_TagOnly_Text.Text = "artist:" + author;
                 Global.MainWindow.Hitomi_Search_Button_Click(this, null);
             }
         }

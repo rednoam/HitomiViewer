@@ -18,6 +18,7 @@ namespace HitomiViewer.Scripts
         public delegate bool DelegateTryEncrypt(ref byte[] byteDecrypt, byte[] byteToEncrypt, string key);
         public static readonly DelegateTryEncrypt TryEncrypt = new DelegateTryEncrypt(AES128.TryEncrypt);
 
+        public static byte[] Default(byte[] data) => Encrypt(data, FilePassword.Password);
         public static void AutoFe(string url)
         {
             if (Global.AutoFileEn)
@@ -57,6 +58,7 @@ namespace HitomiViewer.Scripts
         public delegate bool DelegateTryDecrypt(ref byte[] byteDecrypt, byte[] byteToEncrypt, string key);
         public static readonly DelegateTryDecrypt TryDecrypt = new DelegateTryDecrypt(AES128.TryDecrypt);
 
+        public static byte[] Default(byte[] data) => Decrypt(data, FilePassword.Password);
         public static void Files(string url, string password = null)
         {
             password = password ?? FilePassword.Password;
@@ -66,7 +68,7 @@ namespace HitomiViewer.Scripts
                 try
                 {
                     byte[] org = File.ReadAllBytes(file);
-                    byte[] enc = AES128.Decrypt(org, password);
+                    byte[] enc = FileDecrypt.Decrypt(org, password);
                     File.Delete(file);
                     File.WriteAllBytes(Path.Combine(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file)), enc);
                 }
@@ -86,7 +88,7 @@ namespace HitomiViewer.Scripts
                     if (excepts.Contains(Path.GetExtension(file))) continue;
                     if (allows != null && !allows.Contains(Path.GetExtension(file))) continue;
                     byte[] org = File.ReadAllBytes(file);
-                    byte[] enc = AES128.Decrypt(org, password);
+                    byte[] enc = FileDecrypt.Decrypt(org, password);
                     File.Delete(file);
                     File.WriteAllBytes(Path.Combine(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file)), enc);
                 }

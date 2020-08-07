@@ -174,6 +174,20 @@ namespace HitomiViewer.Scripts.Loaders
         public Action<int> start = null;
         public Action end = null;
 
+        public void FastDefault()
+        {
+            this.start = (int count) =>
+            {
+                Global.MainWindow.label.Content = "0/" + count;
+                Global.MainWindow.label.Visibility = System.Windows.Visibility.Visible;
+            };
+            this.update = (Hitomi h, int index, int max) =>
+            {
+                Global.MainWindow.label.Content = $"{index}/{max}";
+                Global.MainWindow.MainPanel.Children.Add(new UserControls.HitomiPanel(h, Global.MainWindow, true, true));
+            };
+            this.end = () => Global.MainWindow.label.Visibility = System.Windows.Visibility.Collapsed;
+        }
         public void Default()
         {
             this.start = (int count) =>
@@ -189,6 +203,22 @@ namespace HitomiViewer.Scripts.Loaders
             this.end = () => Global.MainWindow.label.Visibility = System.Windows.Visibility.Collapsed;
         }
 
+        public async void FastParser()
+        {
+            InternetP parser = new InternetP();
+            parser.index = (index - 1) * count;
+            parser.count = count;
+            parser.url = "https://ltn.hitomi.la/index-all.nozomi";
+            int[] ids = parser.ByteArrayToIntArray(await parser.LoadNozomi());
+            start(ids.Count());
+            foreach (int id in ids)
+            {
+                parser.index = id;
+                Hitomi h = await parser.HitomiData2();
+                update(h, ids.ToList().IndexOf(id), ids.Count());
+            }
+            end();
+        }
         public async void Parser()
         {
             InternetP parser = new InternetP();

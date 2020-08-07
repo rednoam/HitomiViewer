@@ -47,6 +47,14 @@ namespace HitomiViewer.Processor
             }
             return files;
         }
+        public async Task<Hitomi> HiyobiDataNumber(int? index = null)
+        {
+            url = $"https://api.hiyobi.me/gallery/{index ?? this.index}";
+            JObject obj = await LoadJObject();
+            Hitomi h = HiyobiParse(obj);
+            h.type = Hitomi.Type.Hiyobi;
+            return h;
+        }
         public async Task<string> HiyobiSearch()
         {
             HttpClient client = new HttpClient();
@@ -80,6 +88,20 @@ namespace HitomiViewer.Processor
         {
             url = "https://api.hiyobi.me/auto.json";
             return await LoadJArray();
+        }
+        /// <summary>
+        /// Hiyobi 에서 불러올 수 있는지와 불러올 수 있다면 Hitomi 데이터까지 반환합니다.
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        public async Task<Tuple<bool, Hitomi>> isHiyobiData(int? index = null)
+        {
+            try
+            {
+                Hitomi h = await HiyobiDataNumber(index);
+                return new Tuple<bool, Hitomi>(true, h);
+            }
+            catch { return new Tuple<bool, Hitomi>(false, null); }
         }
         public async Task<bool> isHiyobi(int? index = null)
         {

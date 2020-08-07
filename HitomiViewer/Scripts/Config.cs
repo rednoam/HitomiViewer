@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using ExtensionMethods;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -23,16 +24,20 @@ namespace HitomiViewer.Scripts
             config = JObject.Parse(File.ReadAllText(Global.Config.path));
             return config;
         }
-
         public JObject EncryptLoad()
         {
             if (File.Exists(path))
                 return Load();
             if (!File.Exists(encryptpath)) return new JObject();
             byte[] BOrigin = File.ReadAllBytes(encryptpath);
-            byte[] Decrypt = FileDecrypt.Decrypt(BOrigin, FilePassword.Password);
+            byte[] Decrypt = FileDecrypt.Default(BOrigin);
             string SOrigin = Encoding.UTF8.GetString(Decrypt);
             return JObject.Parse(SOrigin);
+        }
+        public Config GetConfig()
+        {
+            config = Load();
+            return this;
         }
 
         public string StringValue(string path)
@@ -54,6 +59,21 @@ namespace HitomiViewer.Scripts
             return config[path].ToObject<List<T>>();
         }
 
+        public bool Save()
+        {
+            Global.DownloadFolder = StringValue(Settings.download_folder) ?? "hitomi_downloaded";
+            Global.FileEn = BoolValue(Settings.file_encrypt) ?? false;
+            Global.AutoFileEn = BoolValue(Settings.download_file_encrypt) ?? false;
+            Global.EncryptTitle = BoolValue(Settings.encrypt_title) ?? false;
+            Global.RandomTitle = BoolValue(Settings.random_title) ?? false;
+            if (Global.DownloadFolder == "") Global.DownloadFolder = "hitomi_downloaded";
+            string path = encrypt ? Global.Config.encryptpath : Global.Config.path;
+            byte[] bytes = Encoding.UTF8.GetBytes(config.ToString());
+            if (encrypt)
+                bytes = FileEncrypt.Encrypt(bytes, Global.Password);
+            File.WriteAllBytes(path, bytes);
+            return true;
+        }
         public bool Save(JObject data)
         {
             this.config = data;

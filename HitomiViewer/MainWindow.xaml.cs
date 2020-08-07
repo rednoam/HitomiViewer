@@ -49,9 +49,23 @@ namespace HitomiViewer
         {
             AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(ResolveAssembly);
             new LoginClass().Run();
+            new Config().GetConfig().Save();
+
+            Test();
+
             InitializeComponent();
             Init();
             InitEvents();
+        }
+
+        private async void Test()
+        {
+            InternetP parser = new InternetP();
+            parser.index = (1 - 1) * 40;
+            parser.count = 40;
+            parser.url = "https://ltn.hitomi.la/galleriesindex/galleries.1596781270.index";
+            int[] ids = parser.ByteArrayToIntArray(await parser.LoadNozomi());
+            Console.WriteLine(ids);
         }
 
         private void Init()
@@ -424,7 +438,24 @@ namespace HitomiViewer
             else
                 new TaskFactory().StartNew(() => LoadHitomi(path));
         }
-        private void Search_Button_Click(object sender, RoutedEventArgs e)
+        private async void Search_Button_Click(object sender, RoutedEventArgs e)
+        {
+            string SearchText = Search_Text.Text;
+            int number = 0;
+            if (int.TryParse(SearchText, out number))
+            {
+                MainPanel.Children.Clear();
+                InternetP parser = new InternetP(index: number);
+                Tuple<bool, Hitomi> data = await parser.isHiyobiData();
+                bool result = data.Item1;
+                Hitomi h = data.Item2;
+                if (!result)
+                    h = await parser.HitomiData();
+                MainPanel.Children.Add(new HitomiPanel(h, this, true));
+            }
+            else File_Search_Button_Click(sender, e);
+        }
+        private void File_Search_Button_Click(object sender, RoutedEventArgs e)
         {
             string SearchText = Search_Text.Text;
             string[] files = Directory.GetDirectories(path).Where(x => x.RemoveSpace().Contains(SearchText.RemoveSpace())).ToArray();
@@ -450,11 +481,7 @@ namespace HitomiViewer
         }
         private void Hiyobi_Search_Text_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Enter) Task.Factory.StartNew(() =>
-            {
-                Thread.Sleep(500);
-                Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => Hiyobi_Search_Button_Click(null, null)));
-            });
+            if (e.Key == Key.Enter) Hiyobi_Search_Button_Click(null, null);
         }
         public void Hiyobi_Search_Button_Click(object sender, RoutedEventArgs e)
         {
@@ -472,8 +499,8 @@ namespace HitomiViewer
             HitomiLoader hitomi = new HitomiLoader();
             hitomi.index = GetPage();
             hitomi.count = (int)Page_itemCount;
-            hitomi.Default();
-            hitomi.Parser();
+            hitomi.FastDefault();
+            hitomi.FastParser();
         }
         private void Hitomi_Search_Text_KeyDown(object sender, KeyEventArgs e)
         {
@@ -524,7 +551,7 @@ namespace HitomiViewer
                     if (Path.GetFileName(file) == "info.txt") continue;
                     if (Path.GetExtension(file) == ".lock") continue;
                     byte[] org = File.ReadAllBytes(file);
-                    byte[] enc = AES128.Encrypt(org, Global.Password);
+                    byte[] enc = FileEncrypt.Default(org);
                     File.Delete(file);
                     File.WriteAllBytes(file + ".lock", enc);
                 }
@@ -547,7 +574,7 @@ namespace HitomiViewer
                     try
                     {
                         byte[] org = File.ReadAllBytes(file);
-                        byte[] enc = AES128.Decrypt(org, Global.Password);
+                        byte[] enc = FileDecrypt.Default(org);
                         File.Delete(file);
                         File.WriteAllBytes(Path.Combine(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file)), enc);
                     }
@@ -617,6 +644,15 @@ namespace HitomiViewer
             {
                 MessageBox.Show("잘못된 형식 입니다.");
             }
+        }
+
+        private void Hitomi_Search_TagOnly_Text_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter) Hitomi_Search_Button_Click(null, null);
+        }
+        private void Hitomi_Search_TagOnly_Button_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

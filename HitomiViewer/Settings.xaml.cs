@@ -207,7 +207,7 @@ namespace HitomiViewer
                     try
                     {
                         byte[] org = File.ReadAllBytes(file);
-                        byte[] enc = AES128.Decrypt(org, Global.Password);
+                        byte[] enc = FileDecrypt.Default(org);
                         File.Delete(file);
                         File.WriteAllBytes(Path.Combine(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file)), enc);
                         decs.Add(Path.Combine(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file)));
@@ -224,7 +224,7 @@ namespace HitomiViewer
                 if (Path.GetFileName(file) == "info.txt") continue;
                 if (Path.GetExtension(file) == ".lock") continue;
                 byte[] org = File.ReadAllBytes(file);
-                byte[] enc = AES128.Encrypt(org, Global.Password);
+                byte[] enc = Scripts.FileEncrypt.Default(org);
                 File.Delete(file);
                 File.WriteAllBytes(file + ".lock", enc);
             }
